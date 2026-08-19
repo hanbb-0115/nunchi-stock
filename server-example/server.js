@@ -293,6 +293,22 @@ async function loadSearchIndex() {
 loadSearchIndex();
 setInterval(loadSearchIndex, 24 * 60 * 60 * 1000);
 
+// 임시 진단용 — 원인 파악되면 지울 것
+app.get('/api/search-debug', (req, res) => {
+  const sample = SEARCH_INDEX.domestic.find((r) => r.symbol === '293490');
+  const q = '카카오게임즈';
+  res.json({
+    ready: searchIndexReady,
+    domesticCount: SEARCH_INDEX.domestic.length,
+    overseasCount: SEARCH_INDEX.overseas.length,
+    sampleEntry: sample || null,
+    sampleNameCharCodes: sample ? Array.from(sample.name).map((c) => c.codePointAt(0).toString(16)) : null,
+    queryCharCodes: Array.from(q).map((c) => c.codePointAt(0).toString(16)),
+    directIncludesTest: sample ? sample.name.toLowerCase().includes(q.toLowerCase()) : null,
+    firstFewDomestic: SEARCH_INDEX.domestic.slice(0, 5),
+  });
+});
+
 app.get('/api/search', (req, res) => {
   const q = String(req.query.q || '').trim().toLowerCase();
   const marketFilter = req.query.market; // 'domestic' | 'overseas' | 없으면 둘 다
