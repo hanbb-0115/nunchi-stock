@@ -16,8 +16,12 @@
  * ============================================================
  */
 
-const USE_MOCK = true; // KIS App Key 발급받으면 false로 변경 (검색은 이미 실서버 연결되어 있음)
-const PROXY_BASE_URL = 'https://nunchi-stock.onrender.com'; // 프록시 서버 (Render 배포)
+const USE_MOCK = false; // KIS App Key 발급받으면 false로 변경 (검색은 이미 실서버 연결되어 있음)
+// 로컬에서 열었을 땐 로컬 프록시 서버(server-example, 3001 포트)를, 배포 환경에선 Render 서버를 바라봄
+const PROXY_BASE_URL =
+  location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? 'http://localhost:3001'
+    : 'https://nunchi-stock.onrender.com'; // 프록시 서버 (Render 배포)
 
 const MOCK_DOMESTIC = [
   { id: 'KOSPI', name: '코스피', sub: 'KOSPI', price: 2634.15, change: 12.42, changePct: 0.47,

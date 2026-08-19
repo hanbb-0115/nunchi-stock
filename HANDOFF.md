@@ -1,7 +1,7 @@
 # 프로젝트 컨텍스트 — 눈치주식 (전 마켓 나우)
 
 Claude(채팅)에서 기획·프로토타입 작업을 마치고 Claude Code로 이어서 개발 중인 프로젝트예요.
-다른 PC/세션에서 이어서 작업할 때 아래 내용을 참고해주세요. (최종 업데이트: 2026-08-19)
+다른 PC/세션에서 이어서 작업할 때 아래 내용을 참고해주세요. (최종 업데이트: 2026-08-19, KIS 실연동 완료 후)
 
 ## 프로젝트 개요
 
@@ -48,16 +48,40 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
   배지만 있고 아직 미구현 (app.js의 `SKIN_OPTIONS` 배열에 항목만 있음).
 
 ### 안 되는 것 / 막힌 것
-- **한국투자증권 App Key/Secret 미발급** — 사용자가 아직 실계좌가 없어서 계좌 개설부터 필요함
-  (apiportal.koreainvestment.com에서 무료 발급, 실계좌 필요). 이것 때문에 `data.js`의
-  `USE_MOCK`이 아직 `true`임 — **국내/해외 지수·개별종목 시세는 전부 mock 데이터**.
-  검색만 예외적으로 실서버 사용 (키 불필요라서 `USE_MOCK`과 분리해둠, `data.js`의
-  `searchSymbol` 참고).
-- **해외지수(나스닥/다우/S&P500) EXCD 값 미검증** — `server.js`의 `OVERSEAS_INDEX_LIST`에
-  `NAS`/`NYS`로 추정해서 넣어놨는데, 공식 문서로 100% 확정 못 함. 심볼(`COMP`/`.DJI`/`SPX`)은
-  KIS가 배포하는 마스터 파일로 직접 검증했지만 거래소코드는 실제 키 발급 후 첫 호출에서
-  빈 값·에러 나오면 조합 바꿔가며 확인 필요.
 - 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고).
+- Render(`nunchi-stock.onrender.com`)에는 아직 실제 KIS App Key/Secret 환경변수가 설정
+  안 되어 있음 — 로컬(`localhost:3001`)에서만 실연동 검증 완료. 배포본을 실제로 쓰려면
+  Render 대시보드에서 `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ENV=real` 환경변수를 설정해야 함
+  (사용자가 직접 Render 로그인해서 해야 하는 작업).
+
+### 2026-08-19 — KIS 실전투자 API 실연동 완료
+- App Key/Secret 발급받아 `server-example/.env`에 설정, `data.js`의 `USE_MOCK`을 `false`로
+  전환. 국내지수/해외지수/개별종목 시세 전부 실제 KIS API로 확인 완료 (브라우저 E2E 테스트로
+  삼성전자 카드 추가까지 검증함).
+- **해외지수 API를 통째로 교체함**: 기존에 쓰려던 개별종목 시세 API(`HHDFS00000300` +
+  `EXCD`/`SYMB`)는 지수 조회 시 빈 값만 돌아옴. 대신 KIS 공식 GitHub 샘플
+  (`examples_user/overseas_stock/overseas_stock_functions.py`)에서 찾은 지수 전용 API를
+  씀: `tr_id=FHKST03030100`, 엔드포인트
+  `/uapi/overseas-price/v1/quotations/inquire-daily-chartprice`,
+  `FID_COND_MRKT_DIV_CODE=N`(해외지수), `FID_INPUT_ISCD`에 `.DJI`/`COMP`/`SPX` 그대로
+  입력 (EXCD 조합 아님). 응답은 `output1.ovrs_nmix_prpr`(현재가)/`ovrs_nmix_prdy_vrss`(전일대비)
+  /`prdy_ctrt`(등락률). `server.js`의 `OVERSEAS_INDEX_LIST`/`/api/global-indices` 참고.
+- **실전투자 키의 초당 호출 한도가 낮음** — 여러 지수를 `Promise.all`로 동시 호출하면
+  "초당 거래건수를 초과하였습니다" 에러가 자주 남. `server.js`에 전역 직렬화 큐
+  (`throttleKisCall`, 호출 간 700ms 간격) + 레이트리밋 에러 시 자동 재시도(최대 2회)를
+  추가해서 해결함 (`kisGet`/`kisGetOnce` 참고).
+- **로컬 프록시 서버를 편하게 테스트하려고 `data.js`에 환경 분기 추가**: `location.hostname`이
+  `localhost`/`127.0.0.1`이면 `PROXY_BASE_URL`을 `http://localhost:3001`로, 아니면 기존
+  Render 주소로 자동 전환.
+- **미리보기 브라우저(Claude Code의 in-app Browser 패널)에서 다른 로컬 포트(3001)로의
+  fetch가 막히는 현상 발견** — 직접 URL 접속은 되는데 JS `fetch()`만 `ERR_FAILED`로 실패함.
+  이건 그 프리뷰 패널 자체의 샌드박스 제약으로 보이고, 실제 사용자 Chrome에서는 정상 동작함
+  (Claude in Chrome으로 재검증해서 확인함). 로컬 프록시 연동 디버깅할 땐 in-app 프리뷰 패널
+  말고 실제 브라우저로 확인할 것.
+- 이 작업 중 Node.js가 이 PC에 새로 설치됨 (winget으로, LTS 24.19.0) — 위 22번째 줄의
+  "이 PC엔 Node.js가 안 깔려있어서" 문구는 이제 사실이 아님. 다만 새 터미널 세션에서
+  PATH가 바로 안 잡힐 수 있어서 `C:\Program Files\nodejs`를 PATH에 명시적으로 추가해야
+  할 수도 있음.
 
 ## 알아두면 좋은 실수/교훈
 
@@ -81,9 +105,9 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
 
 ## 다음에 할 일 (우선순위 순)
 
-1. 사용자가 한국투자증권 실계좌 개설 → App Key/Secret 발급 → `server-example/.env`에 채우고
-   Render 환경변수에도 설정 → `data.js`의 `USE_MOCK=false`로 전환 → 해외지수 EXCD 값 실제
-   호출로 검증
+1. **Render 환경변수 설정** — Render 대시보드(사용자가 직접 로그인)에서
+   `nunchi-stock-kis-proxy` 서비스에 `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ENV=real` 환경변수
+   설정해서 배포본(`nunchi-stock.onrender.com`)도 실제 시세가 나오게 하기. 로컬은 이미 됨.
 2. 워드/파워포인트 위장 테마 구현 (엑셀 테마와 같은 패턴: `app.js`의 `SKIN_OPTIONS`에 이미
    자리 있음, `style.css`에 `[data-skin="word"]`/`[data-skin="ppt"]` 섹션 추가 + 필요하면
    `index.html`에 각 테마용 가짜 UI 마크업 추가)

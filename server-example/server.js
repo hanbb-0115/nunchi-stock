@@ -10,13 +10,12 @@
  *  3) npm install
  *  4) npm start  (Node 18+ 필요 — 내장 fetch 사용)
  *
- * 검증 필요 항목
- *  - 해외지수(나스닥/다우/S&P500) 조회 시 EXCD 값은 공식 문서로 100% 확정하지
- *    못했다. 아래 OVERSEAS_INDEX_LIST의 excd를 실제 키로 첫 호출해보고,
- *    응답이 빈 값이거나 에러면 'NAS'/'NYS'/'AMS' 조합을 바꿔가며 확인할 것.
- *    (심볼 자체는 한국투자증권이 배포하는 frgn_code.mst 마스터 파일에서
- *     직접 확인함: 나스닥종합=COMP, 다우존스=.DJI, S&P500=SPX — 파일에는
- *     맨 앞에 지수 구분자 'P'가 붙어있는데 실제 조회 시엔 뗀다.)
+ * 레이트리밋 대응
+ *  - 실전투자 키는 초당 호출 한도가 낮아서(테스트 중 "초당 거래건수를 초과하였습니다"
+ *    에러 빈발), KIS 호출을 전역 큐로 직렬화 + 재시도한다(throttleKisCall/kisGet 참고).
+ *  - 그것과 별개로, 동시 접속자가 늘면 방문자 수만큼 KIS 호출이 배로 늘어나는 걸 막기
+ *    위해 응답을 짧게(CACHE_TTL_MS) 캐시한다 — 시세 훑어보기 용도라 몇 초 지연은
+ *    문제없고, 캐시 덕분에 방문자 수와 무관하게 KIS 호출 빈도가 고정된다.
  */
 
 require('dotenv').config();
@@ -27,6 +26,12 @@ const iconv = require('iconv-lite');
 
 const app = express();
 app.use(cors());
+// Chrome Private Network Access: 다른 포트(예: 정적 서버 8090 → 이 프록시 3001)로의
+// 요청이 "사설망 접근"으로 분류돼 프리플라이트에서 막히는 걸 막기 위해 명시적으로 허용
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Private-Network', 'true');
+  next();
+});
 
 const PORT = process.env.PORT || 3001;
 const KIS_ENV = process.env.KIS_ENV === 'virtual' ? 'virtual' : 'real';
@@ -66,8 +71,28 @@ async function getAccessToken() {
   return cachedToken;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // ---------- 공통 호출 헬퍼 ----------
-async function kisGet(path, trId, params) {
+// KIS 실전투자 키는 초당 호출 건수 제한이 낮아서(테스트 중 "초당 거래건수를 초과하였습니다"
+// 에러 확인), 앱 전체에서 KIS API 호출을 한 줄로 직렬화 + 최소 간격을 둔다.
+let queueTail = Promise.resolve();
+let lastCallAt = 0;
+const MIN_CALL_INTERVAL_MS = 700; // 신규 발급 키는 한도가 더 낮은 편이라 여유 있게 잡음
+
+function throttleKisCall() {
+  const turn = queueTail.then(async () => {
+    const wait = lastCallAt + MIN_CALL_INTERVAL_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastCallAt = Date.now();
+  });
+  queueTail = turn.catch(() => {}); // 에러가 나도 큐가 끊기지 않도록
+  return turn;
+}
+
+async function kisGetOnce(path, trId, params) {
   const token = await getAccessToken();
   const qs = new URLSearchParams(params).toString();
   const res = await fetch(`${KIS_BASE_URL}${path}?${qs}`, {
@@ -86,6 +111,44 @@ async function kisGet(path, trId, params) {
   return json;
 }
 
+async function kisGet(path, trId, params, retriesLeft = 2) {
+  await throttleKisCall();
+  try {
+    return await kisGetOnce(path, trId, params);
+  } catch (err) {
+    if (retriesLeft > 0 && String(err.message).includes('초당 거래건수')) {
+      await sleep(MIN_CALL_INTERVAL_MS);
+      return kisGet(path, trId, params, retriesLeft - 1);
+    }
+    throw err;
+  }
+}
+
+// ---------- 응답 캐시 (방문자 수와 무관하게 KIS 호출 빈도를 고정) ----------
+// 시세 훑어보기 용도라 몇 초 지연은 문제없고, 대신 동시 접속자가 몇 명이든
+// 캐시 주기당 KIS 호출은 한 번만 나가게 된다. in-flight 요청은 결과를 공유해서
+// 캐시가 비어있는 순간 여러 요청이 동시에 들어와도 KIS를 중복 호출하지 않는다.
+const CACHE_TTL_MS = 15000;
+const cacheStore = new Map(); // key -> { expiresAt, data } | { expiresAt: Infinity, promise }
+
+async function withCache(key, fn) {
+  const cached = cacheStore.get(key);
+  if (cached) {
+    if (cached.promise) return cached.promise; // 이미 진행 중인 같은 요청에 편승
+    if (cached.expiresAt > Date.now()) return cached.data;
+  }
+  const promise = fn();
+  cacheStore.set(key, { expiresAt: Infinity, promise });
+  try {
+    const data = await promise;
+    cacheStore.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, data });
+    return data;
+  } catch (err) {
+    cacheStore.delete(key); // 실패하면 캐시에 남기지 않고 다음 요청이 재시도하게 함
+    throw err;
+  }
+}
+
 // ---------- 2) 국내 지수 (코스피/코스닥) ----------
 const DOMESTIC_INDEX_LIST = [
   { id: 'KOSPI', name: '코스피', sub: 'KOSPI', iscd: '0001' },
@@ -94,23 +157,25 @@ const DOMESTIC_INDEX_LIST = [
 
 app.get('/api/domestic-indices', async (req, res) => {
   try {
-    const results = await Promise.all(
-      DOMESTIC_INDEX_LIST.map(async (idx) => {
-        const json = await kisGet(
-          '/uapi/domestic-stock/v1/quotations/inquire-index-price',
-          'FHPUP02100000',
-          { FID_COND_MRKT_DIV_CODE: 'U', FID_INPUT_ISCD: idx.iscd }
-        );
-        const o = json.output || {};
-        return {
-          id: idx.id,
-          name: idx.name,
-          sub: idx.sub,
-          price: Number(o.bstp_nmix_prpr ?? 0),
-          change: Number(o.bstp_nmix_prdy_vrss ?? 0),
-          changePct: Number(o.bstp_nmix_prdy_ctrt ?? 0),
-        };
-      })
+    const results = await withCache('domestic-indices', () =>
+      Promise.all(
+        DOMESTIC_INDEX_LIST.map(async (idx) => {
+          const json = await kisGet(
+            '/uapi/domestic-stock/v1/quotations/inquire-index-price',
+            'FHPUP02100000',
+            { FID_COND_MRKT_DIV_CODE: 'U', FID_INPUT_ISCD: idx.iscd }
+          );
+          const o = json.output || {};
+          return {
+            id: idx.id,
+            name: idx.name,
+            sub: idx.sub,
+            price: Number(o.bstp_nmix_prpr ?? 0),
+            change: Number(o.bstp_nmix_prdy_vrss ?? 0),
+            changePct: Number(o.bstp_nmix_prdy_ctrt ?? 0),
+          };
+        })
+      )
     );
     res.json(results);
   } catch (err) {
@@ -119,33 +184,50 @@ app.get('/api/domestic-indices', async (req, res) => {
 });
 
 // ---------- 3) 해외 지수 (나스닥종합/다우존스/S&P500) ----------
-// ⚠️ excd는 검증 필요 항목 (파일 상단 주석 참고)
+// 개별종목 시세 API(HHDFS00000300)로는 지수가 조회되지 않아서(빈 값), 지수/환율 전용
+// API(FHKST03030100, 해외주식 종목_지수_환율기간별시세)를 사용한다. 실제 키로 검증 완료:
+// FID_COND_MRKT_DIV_CODE='N'(해외지수) + FID_INPUT_ISCD에 '.DJI'/'COMP'/'SPX' 그대로 넣으면 됨
+// (EXCD/SYMB 조합이 아니라 이 API 전용 종목코드 체계를 씀).
 const OVERSEAS_INDEX_LIST = [
-  { id: 'IXIC', name: '나스닥', sub: 'NASDAQ Composite', excd: 'NAS', symb: 'COMP' },
-  { id: 'DJI', name: '다우존스', sub: 'Dow Jones', excd: 'NYS', symb: '.DJI' },
-  { id: 'SPX', name: 'S&P 500', sub: 'S&P 500', excd: 'NYS', symb: 'SPX' },
+  { id: 'IXIC', name: '나스닥', sub: 'NASDAQ Composite', iscd: 'COMP' },
+  { id: 'DJI', name: '다우존스', sub: 'Dow Jones', iscd: '.DJI' },
+  { id: 'SPX', name: 'S&P 500', sub: 'S&P 500', iscd: 'SPX' },
 ];
+
+function yyyymmdd(date) {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+}
 
 app.get('/api/global-indices', async (req, res) => {
   try {
-    const results = await Promise.all(
-      OVERSEAS_INDEX_LIST.map(async (idx) => {
-        const json = await kisGet('/uapi/overseas-price/v1/quotations/price', 'HHDFS00000300', {
-          AUTH: '',
-          EXCD: idx.excd,
-          SYMB: idx.symb,
-        });
-        const o = json.output || {};
-        return {
-          id: idx.id,
-          name: idx.name,
-          sub: idx.sub,
-          price: Number(o.last ?? 0),
-          change: Number(o.diff ?? 0),
-          changePct: Number(o.rate ?? 0),
-        };
-      })
-    );
+    const results = await withCache('global-indices', () => {
+      const dateTo = yyyymmdd(new Date());
+      const dateFrom = yyyymmdd(new Date(Date.now() - 10 * 86400000)); // 주말/휴장 대비 여유
+      return Promise.all(
+        OVERSEAS_INDEX_LIST.map(async (idx) => {
+          const json = await kisGet(
+            '/uapi/overseas-price/v1/quotations/inquire-daily-chartprice',
+            'FHKST03030100',
+            {
+              FID_COND_MRKT_DIV_CODE: 'N',
+              FID_INPUT_ISCD: idx.iscd,
+              FID_INPUT_DATE_1: dateFrom,
+              FID_INPUT_DATE_2: dateTo,
+              FID_PERIOD_DIV_CODE: 'D',
+            }
+          );
+          const o = json.output1 || {};
+          return {
+            id: idx.id,
+            name: idx.name,
+            sub: idx.sub,
+            price: Number(o.ovrs_nmix_prpr ?? 0),
+            change: Number(o.ovrs_nmix_prdy_vrss ?? 0),
+            changePct: Number(o.prdy_ctrt ?? 0),
+          };
+        })
+      );
+    });
     res.json(results);
   } catch (err) {
     res.status(500).json({ error: 'global index fetch failed', detail: String(err) });
@@ -164,37 +246,43 @@ app.get('/api/quote', async (req, res) => {
 
   try {
     if (market === 'domestic') {
-      const json = await kisGet('/uapi/domestic-stock/v1/quotations/inquire-price', 'FHKST01010100', {
-        FID_COND_MRKT_DIV_CODE: 'J',
-        FID_INPUT_ISCD: symbol,
+      const data = await withCache(`quote:domestic:${symbol}`, async () => {
+        const json = await kisGet('/uapi/domestic-stock/v1/quotations/inquire-price', 'FHKST01010100', {
+          FID_COND_MRKT_DIV_CODE: 'J',
+          FID_INPUT_ISCD: symbol,
+        });
+        const o = json.output || {};
+        return {
+          symbol,
+          name: name || o.hts_kor_isnm || symbol,
+          market: 'domestic',
+          price: Number(o.stck_prpr ?? 0),
+          change: Number(o.prdy_vrss ?? 0),
+          changePct: Number(o.prdy_ctrt ?? 0),
+        };
       });
-      const o = json.output || {};
-      return res.json({
-        symbol,
-        name: name || o.hts_kor_isnm || symbol,
-        market: 'domestic',
-        price: Number(o.stck_prpr ?? 0),
-        change: Number(o.prdy_vrss ?? 0),
-        changePct: Number(o.prdy_ctrt ?? 0),
-      });
+      return res.json(data);
     }
 
     if (market === 'overseas') {
       if (!excd) return res.status(400).json({ error: '해외 종목은 excd 파라미터가 필요해요 (예: NAS)' });
-      const json = await kisGet('/uapi/overseas-price/v1/quotations/price', 'HHDFS00000300', {
-        AUTH: '',
-        EXCD: excd,
-        SYMB: symbol,
+      const data = await withCache(`quote:overseas:${excd}:${symbol}`, async () => {
+        const json = await kisGet('/uapi/overseas-price/v1/quotations/price', 'HHDFS00000300', {
+          AUTH: '',
+          EXCD: excd,
+          SYMB: symbol,
+        });
+        const o = json.output || {};
+        return {
+          symbol,
+          name: name || symbol,
+          market: 'overseas',
+          price: Number(o.last ?? 0),
+          change: Number(o.diff ?? 0),
+          changePct: Number(o.rate ?? 0),
+        };
       });
-      const o = json.output || {};
-      return res.json({
-        symbol,
-        name: name || symbol,
-        market: 'overseas',
-        price: Number(o.last ?? 0),
-        change: Number(o.diff ?? 0),
-        changePct: Number(o.rate ?? 0),
-      });
+      return res.json(data);
     }
 
     res.status(400).json({ error: "market은 'domestic' 또는 'overseas'여야 해요" });

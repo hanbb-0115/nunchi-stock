@@ -38,19 +38,22 @@ stock-widget/
 4. `npm start`로 프록시 서버 실행 (기본 포트 3001)
 5. `data.js` 상단의 `USE_MOCK`을 `false`로 변경
 
-구현된 엔드포인트 (한국투자증권 공식 GitHub 샘플코드 기준으로 확인함):
+구현된 엔드포인트 (한국투자증권 공식 GitHub 샘플코드 기준으로 확인 + 실전투자 키로 실제 검증 완료):
 
 | 용도 | tr_id / 방식 | 엔드포인트 |
 |---|---|---|
 | 국내 지수 (코스피/코스닥) | `FHPUP02100000` | `/uapi/domestic-stock/v1/quotations/inquire-index-price` |
 | 국내 개별종목 시세 | `FHKST01010100` | `/uapi/domestic-stock/v1/quotations/inquire-price` |
-| 해외 지수·개별종목 시세 | `HHDFS00000300` | `/uapi/overseas-price/v1/quotations/price` |
+| 해외 지수 (나스닥/다우/S&P500) | `FHKST03030100` | `/uapi/overseas-price/v1/quotations/inquire-daily-chartprice` |
+| 해외 개별종목 시세 | `HHDFS00000300` | `/uapi/overseas-price/v1/quotations/price` |
 | 종목 검색 (LIKE 검색) | 마스터 파일 다운로드 | `new.real.download.dws.co.kr` (공개 URL, **API 키 불필요**) |
 
-> ⚠️ **검증 필요**: 해외지수(나스닥/다우/S&P500) 조회용 `EXCD` 값은 공식 문서로 100% 확정하지 못했어요.
-> 심볼(`COMP`/`.DJI`/`SPX`)은 한국투자증권이 배포하는 `frgn_code.mst` 마스터 파일에서 직접 확인했지만,
-> 조회 시 붙이는 거래소코드(`EXCD`)는 `server.js`에 `NAS`/`NYS`로 넣어둔 추정값이에요.
-> 실제 키로 첫 호출해서 빈 값·에러가 나오면 `EXCD`를 바꿔가며 확인해주세요.
+> 해외지수는 개별종목 시세 API(`HHDFS00000300` + `EXCD`/`SYMB`)로는 빈 값만 돌아와서,
+> 지수 전용 API(`FHKST03030100`)로 교체했어요. `FID_COND_MRKT_DIV_CODE=N`(해외지수) +
+> `FID_INPUT_ISCD`에 `.DJI`/`COMP`/`SPX`를 그대로 넣으면 돼요. 자세한 내용은 `HANDOFF.md` 참고.
+>
+> ⚠️ **실전투자 키는 초당 호출 한도가 낮아요**: 여러 지수를 동시 호출하면 레이트리밋에 잘 걸려서,
+> `server.js`에 전역 직렬화 큐 + 자동 재시도를 넣어뒀어요 (`kisGet` 참고).
 
 > App Key/Secret은 절대 `app.js`(브라우저 코드)에 직접 넣지 마세요. 반드시 서버를 거쳐야 안전해요.
 
