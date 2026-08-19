@@ -297,6 +297,7 @@ setInterval(loadSearchIndex, 24 * 60 * 60 * 1000);
 app.get('/api/search-debug', (req, res) => {
   const sample = SEARCH_INDEX.domestic.find((r) => r.symbol === '293490');
   const q = '카카오게임즈';
+  const reqQ = String(req.query.q || '');
   res.json({
     ready: searchIndexReady,
     domesticCount: SEARCH_INDEX.domestic.length,
@@ -305,6 +306,10 @@ app.get('/api/search-debug', (req, res) => {
     sampleNameCharCodes: sample ? Array.from(sample.name).map((c) => c.codePointAt(0).toString(16)) : null,
     queryCharCodes: Array.from(q).map((c) => c.codePointAt(0).toString(16)),
     directIncludesTest: sample ? sample.name.toLowerCase().includes(q.toLowerCase()) : null,
+    reqQueryRaw: reqQ,
+    reqQueryCharCodes: Array.from(reqQ).map((c) => c.codePointAt(0).toString(16)),
+    reqQueryIncludesTest: sample && reqQ ? sample.name.toLowerCase().includes(reqQ.toLowerCase()) : null,
+    reqQueryLength: reqQ.length,
     firstFewDomestic: SEARCH_INDEX.domestic.slice(0, 5),
   });
 });
