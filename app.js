@@ -12,6 +12,11 @@ const DEFAULT_GLOBAL_ORDER = [
   { kind: 'index', id: 'SPX' },
 ];
 
+// ---------- GA4 이벤트 추적 ----------
+function track(name, params) {
+  if (typeof gtag === 'function') gtag('event', name, params || {});
+}
+
 // ---------- 유틸 ----------
 function formatPrice(n) {
   return n.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
@@ -100,6 +105,7 @@ installBtn.addEventListener('click', async () => {
   deferredInstallPrompt.prompt();
   const choice = await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
+  track('pwa_install_prompt', { outcome: choice.outcome });
   if (choice.outcome !== 'accepted') installBtn.hidden = false;
 });
 
@@ -154,6 +160,7 @@ function renderSkinMenu() {
   skinDropdown.querySelectorAll('.skin-option:not([disabled])').forEach((btn) => {
     btn.addEventListener('click', () => {
       applySkin(btn.dataset.skin);
+      track('skin_change', { skin: btn.dataset.skin, source: 'menu' });
       closeSkinMenu();
     });
   });
@@ -196,6 +203,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     applySkin(BOSS_KEY_SKIN);
+    track('skin_change', { skin: BOSS_KEY_SKIN, source: 'boss_key' });
     closeSkinMenu();
   }
 });
@@ -212,6 +220,7 @@ document.querySelectorAll('.tab').forEach((btn) => {
     btn.classList.add('active');
     btn.setAttribute('aria-selected', 'true');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    track('tab_switch', { tab: btn.dataset.tab });
   });
 });
 
@@ -236,7 +245,7 @@ function renderCard(item) {
       </div>
       <div class="idx-spark">${sparklineSvg(item.trend, cls)}</div>
       <div class="idx-numbers">
-        <div class="idx-price">${formatPrice(item.price)}</div>
+        <div class="idx-price">${formatPrice(item.price)}<span class="idx-unit">${item.market === 'overseas' ? '달러' : '원'}</span></div>
         <div class="idx-change ${cls}">
           ${changeSign(item.change)}${formatPrice(item.change)} (${changeSign(item.changePct)}${item.changePct.toFixed(2)}%)
         </div>
@@ -253,6 +262,7 @@ function toggleStar(btn) {
   const symbol = btn.dataset.symbol;
   if (isInWatchlist(symbol)) {
     removeFromWatchlist(symbol);
+    track('watchlist_remove', { market: btn.dataset.market });
   } else {
     addToWatchlist({
       symbol,
@@ -261,6 +271,7 @@ function toggleStar(btn) {
       excd: btn.dataset.excd || undefined,
       label: btn.dataset.label,
     });
+    track('watchlist_add', { market: btn.dataset.market });
   }
   loadDomestic();
   loadGlobal();
@@ -374,7 +385,7 @@ async function loadDomestic() {
       .map((o) => {
         if (o.kind === 'index') {
           const idx = indexMap[o.id];
-          return idx ? { ...idx, removable: false } : null;
+          return idx ? { ...idx, removable: false, market: 'domestic' } : null;
         }
         const q = quoteMap[o.symbol];
         return q
@@ -445,7 +456,7 @@ async function loadGlobal() {
       .map((o) => {
         if (o.kind === 'index') {
           const idx = indexMap[o.id];
-          return idx ? { ...idx, removable: false } : null;
+          return idx ? { ...idx, removable: false, market: 'overseas' } : null;
         }
         const q = quoteMap[o.symbol];
         return q
@@ -573,6 +584,7 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
           excd: row.dataset.excd || undefined,
           label: row.dataset.label,
         });
+        track('card_add', { market: row.dataset.market });
         resultsEl.hidden = true;
         inputEl.value = '';
       });
@@ -589,6 +601,7 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
 
     const results = await MarketData.searchSymbol(q, marketFilter);
     if (myRequestId !== requestId) return; // 늦게 도착한 이전 요청 결과는 버림
+    track('search', { market: marketFilter, has_results: results && results.length > 0 });
 
     if (!results || results.length === 0) {
       resultsEl.innerHTML = `<div class="search-result-row"><span class="sr-name">검색 결과가 없어요</span></div>`;

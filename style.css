@@ -176,6 +176,12 @@ body.no-select{user-select:none;}
   font-size:18px; font-weight:700;
   text-align:right;
 }
+.idx-unit{
+  font-family:var(--mono);
+  font-size:12px; font-weight:500;
+  color:var(--text-dim);
+  margin-left:2px;
+}
 .idx-change{
   font-family:var(--mono);
   font-size:12px; font-weight:600;

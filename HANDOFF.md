@@ -82,6 +82,14 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
   "이 PC엔 Node.js가 안 깔려있어서" 문구는 이제 사실이 아님. 다만 새 터미널 세션에서
   PATH가 바로 안 잡힐 수 있어서 `C:\Program Files\nodejs`를 PATH에 명시적으로 추가해야
   할 수도 있음.
+- **지수/개별종목 가격 끝에 단위 표시 추가** — `app.js`의 `renderCard`에서 국내(`market:
+  'domestic'`)는 "원", 해외(`market: 'overseas'`)는 "달러"를 가격 뒤에 작은 회색 글씨로
+  붙임 (`.idx-unit`, `style.css`). 지수 카드는 원래 `market` 필드가 없었는데 이때 추가함
+  (`loadDomestic`/`loadGlobal`에서 index 아이템에도 `market` 태깅).
+- **GA4(Google Analytics) 연동** — 측정 ID `G-LG2FL8KJ6B`로 `index.html`에 gtag.js 스크립트
+  삽입, `app.js`에 `track()` 헬퍼 추가해서 탭 전환/검색/관심종목 추가·삭제/위장모드 전환
+  (보스키 포함)/PWA 설치 프롬프트에 커스텀 이벤트 붙임. 통계는 analytics.google.com에서
+  확인 (사용자가 직접 만든 GA4 속성).
 
 ## 알아두면 좋은 실수/교훈
 
