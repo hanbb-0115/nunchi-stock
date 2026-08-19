@@ -700,8 +700,16 @@ async function loadPopularTicker() {
     return;
   }
 
-  // 순위/이름만 있는 목록에 시세도 같이 보여주기 위해 종목별로 시세를 붙임
-  // (클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음)
+  // 순위/이름은 시세 없이 바로 보여줌 — 실전투자 키는 초당 호출 제한 때문에
+  // 종목 10개 시세를 다 받으려면(캐시 없으면) 최대 몇 초 걸릴 수 있어서, 그동안
+  // 티커가 빈 채로 떠 있지 않게 먼저 그리고 시세는 뒤이어 채워 넣음
+  tickerItems = ranked;
+  paintTickerSlide();
+  if (tickerItems.length > 1) {
+    tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+  }
+
+  // 클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음
   tickerItems = await Promise.all(
     ranked.map(async (it) => {
       try {
@@ -712,10 +720,7 @@ async function loadPopularTicker() {
       }
     })
   );
-  paintTickerSlide();
-  if (tickerItems.length > 1) {
-    tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
-  }
+  paintTickerSlide(); // 현재 보이는 항목 기준으로 다시 그려서 시세 반영
 }
 
 function tickerQuoteHtml(it, priceClass, changeClassPrefix) {
