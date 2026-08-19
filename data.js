@@ -95,12 +95,23 @@ const MarketData = {
 
   async searchSymbol(query, marketFilter) {
     const q = query.trim().toLowerCase();
-    const results = SEARCH_DB.filter((it) => {
-      if (marketFilter && it.market !== marketFilter) return false;
-      return it.name.toLowerCase().includes(q) || it.symbol.toLowerCase().includes(q);
-    });
-    if (USE_MOCK) return delay(results);
-    return results;
+    if (!q) return [];
+
+    if (USE_MOCK) {
+      const results = SEARCH_DB.filter((it) => {
+        if (marketFilter && it.market !== marketFilter) return false;
+        return it.name.toLowerCase().includes(q) || it.symbol.toLowerCase().includes(q);
+      });
+      return delay(results);
+    }
+
+    // 실 연동: 서버가 코스피/코스닥/나스닥/뉴욕/아멕스 전체 종목 마스터 파일을
+    // 미리 받아서 들고 있다가 LIKE 검색해줌 (server-example/server.js 참고)
+    const params = new URLSearchParams({ q });
+    if (marketFilter) params.set('market', marketFilter);
+    const res = await fetch(`${PROXY_BASE_URL}/api/search?${params.toString()}`);
+    if (!res.ok) return [];
+    return await res.json();
   },
 
   async getQuote(symbol, name, market, excd) {

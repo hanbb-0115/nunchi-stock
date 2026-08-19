@@ -1,4 +1,4 @@
-# 마켓 나우 — 환율·주가 위젯 (PWA)
+# 눈치주식 — 관심종목 시세 위젯 (PWA)
 
 코스피·코스닥·나스닥·다우·S&P500과 관심종목을 한눈에 보여주는 설치형 웹앱이에요.
 
@@ -40,11 +40,12 @@ stock-widget/
 
 구현된 엔드포인트 (한국투자증권 공식 GitHub 샘플코드 기준으로 확인함):
 
-| 용도 | tr_id | 엔드포인트 |
+| 용도 | tr_id / 방식 | 엔드포인트 |
 |---|---|---|
 | 국내 지수 (코스피/코스닥) | `FHPUP02100000` | `/uapi/domestic-stock/v1/quotations/inquire-index-price` |
 | 국내 개별종목 시세 | `FHKST01010100` | `/uapi/domestic-stock/v1/quotations/inquire-price` |
 | 해외 지수·개별종목 시세 | `HHDFS00000300` | `/uapi/overseas-price/v1/quotations/price` |
+| 종목 검색 (LIKE 검색) | 마스터 파일 다운로드 | `new.real.download.dws.co.kr` (공개 URL, **API 키 불필요**) |
 
 > ⚠️ **검증 필요**: 해외지수(나스닥/다우/S&P500) 조회용 `EXCD` 값은 공식 문서로 100% 확정하지 못했어요.
 > 심볼(`COMP`/`.DJI`/`SPX`)은 한국투자증권이 배포하는 `frgn_code.mst` 마스터 파일에서 직접 확인했지만,
@@ -52,6 +53,17 @@ stock-widget/
 > 실제 키로 첫 호출해서 빈 값·에러가 나오면 `EXCD`를 바꿔가며 확인해주세요.
 
 > App Key/Secret은 절대 `app.js`(브라우저 코드)에 직접 넣지 마세요. 반드시 서버를 거쳐야 안전해요.
+
+### 종목 검색 (LIKE 검색 / 실시간 미리보기)
+
+`GET /api/search?q=삼성&market=domestic` — 입력한 단어가 종목코드/한글명/영문명 어디든 포함되면 찾아줘요.
+
+- 코스피·코스닥 전체 종목 + 나스닥·뉴욕·아멕스 전체 종목을 한국투자증권이 공개 배포하는
+  종목 마스터 파일(`kospi_code.mst`, `kosdaq_code.mst`, `nasmst.cod` 등)로 서버 시작 시 한 번
+  받아서 메모리에 올려두고, 이후 검색은 전부 로컬에서 처리해요 (매 검색마다 KIS API를 호출하지
+  않음 — 빠르고, App Key 없이도 동작해요).
+- 24시간마다 자동으로 마스터 파일을 다시 받아서 상장/폐지를 반영해요.
+- 프론트(`app.js`)는 입력할 때마다 250ms 디바운스 후 자동으로 미리보기를 띄워요 (검색 버튼 없이도 동작).
 
 ## 2단계 — PWA로 배포하기
 

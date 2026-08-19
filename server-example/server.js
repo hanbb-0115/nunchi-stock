@@ -22,6 +22,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const AdmZip = require('adm-zip');
+const iconv = require('iconv-lite');
 
 const app = express();
 app.use(cors());
@@ -199,6 +201,106 @@ app.get('/api/quote', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'quote fetch failed', detail: String(err) });
   }
+});
+
+// ---------- 5) 종목 검색 (LIKE 검색용 마스터 파일) ----------
+// 한국투자증권이 공개 배포하는 종목 마스터 파일을 다운로드해서 로컬로 검색한다.
+// (API 키 없이도 접근 가능한 공개 URL — 시세 조회와 무관하게 항상 동작함)
+// 상장/폐지 반영을 위해 서버 시작 시 + 24시간마다 새로 받는다.
+const MST_BASE = 'https://new.real.download.dws.co.kr/common/master';
+let SEARCH_INDEX = { domestic: [], overseas: [] };
+let searchIndexReady = false;
+
+async function downloadMst(filename) {
+  const res = await fetch(`${MST_BASE}/${filename}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const zip = new AdmZip(buf);
+  const entry = zip.getEntries()[0];
+  return iconv.decode(entry.getData(), 'cp949');
+}
+
+// 국내(코스피/코스닥) 마스터: 종목코드(9) + 표준코드(12) + 종목명(43) + ...
+function parseDomesticMst(text, label) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      const symbol = line.slice(0, 9).trim();
+      const name = line.slice(21, 21 + 43).trim();
+      return { symbol, name, market: 'domestic', label };
+    })
+    .filter((r) => r.symbol && r.name);
+}
+
+// 해외 거래소 마스터: 탭 구분, 5번째=심볼, 7번째=한글명, 8번째=영문명
+function parseOverseasMst(text, excd, label) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      const cols = line.split('\t');
+      const symbol = (cols[4] || '').trim();
+      const korName = (cols[6] || '').trim();
+      const engName = (cols[7] || '').trim();
+      return { symbol, name: korName || engName, engName, market: 'overseas', excd, label };
+    })
+    .filter((r) => r.symbol && (r.name || r.engName));
+}
+
+async function loadSearchIndex() {
+  try {
+    const [kospi, kosdaq] = await Promise.all([
+      downloadMst('kospi_code.mst.zip'),
+      downloadMst('kosdaq_code.mst.zip'),
+    ]);
+    const domestic = [...parseDomesticMst(kospi, 'KOSPI'), ...parseDomesticMst(kosdaq, 'KOSDAQ')];
+
+    const [nas, nys, ams] = await Promise.all([
+      downloadMst('nasmst.cod.zip'),
+      downloadMst('nysmst.cod.zip'),
+      downloadMst('amsmst.cod.zip'),
+    ]);
+    const overseas = [
+      ...parseOverseasMst(nas, 'NAS', 'NASDAQ'),
+      ...parseOverseasMst(nys, 'NYS', 'NYSE'),
+      ...parseOverseasMst(ams, 'AMS', 'AMEX'),
+    ];
+
+    SEARCH_INDEX = { domestic, overseas };
+    searchIndexReady = true;
+    console.log(`검색 인덱스 로드 완료: 국내 ${domestic.length}종목, 해외 ${overseas.length}종목`);
+  } catch (err) {
+    console.error('검색 인덱스 로드 실패:', err.message);
+  }
+}
+
+loadSearchIndex();
+setInterval(loadSearchIndex, 24 * 60 * 60 * 1000);
+
+app.get('/api/search', (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const marketFilter = req.query.market; // 'domestic' | 'overseas' | 없으면 둘 다
+  if (!q) return res.json([]);
+  if (!searchIndexReady) {
+    return res.status(503).json({ error: '검색 데이터를 아직 불러오는 중이에요. 잠시 후 다시 시도해주세요.' });
+  }
+
+  const pools = marketFilter === 'domestic' ? [SEARCH_INDEX.domestic]
+    : marketFilter === 'overseas' ? [SEARCH_INDEX.overseas]
+    : [SEARCH_INDEX.domestic, SEARCH_INDEX.overseas];
+
+  const results = [];
+  outer: for (const pool of pools) {
+    for (const item of pool) {
+      if (
+        item.symbol.toLowerCase().includes(q) ||
+        item.name.toLowerCase().includes(q) ||
+        (item.engName && item.engName.toLowerCase().includes(q))
+      ) {
+        results.push(item);
+        if (results.length >= 30) break outer;
+      }
+    }
+  }
+  res.json(results);
 });
 
 app.listen(PORT, () => console.log(`KIS 프록시 서버 실행 중 (${KIS_ENV}) :${PORT}`));

@@ -1,8 +1,8 @@
 {
-  "name": "marketnow-kis-proxy",
+  "name": "nunchi-stock-kis-proxy",
   "version": "1.0.0",
   "private": true,
-  "description": "한국투자증권 Open API 프록시 서버 (마켓 나우)",
+  "description": "한국투자증권 Open API 프록시 서버 (눈치주식)",
   "main": "server.js",
   "engines": {
     "node": ">=18"
@@ -11,8 +11,10 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.14",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "iconv-lite": "^0.6.3"
   }
 }

@@ -206,7 +206,8 @@ body.no-select{user-select:none;}
 
 .search-results{
   background:var(--bg-elev); border:1px solid var(--line);
-  border-radius:var(--radius); margin-bottom:14px; overflow:hidden;
+  border-radius:var(--radius); margin-bottom:14px;
+  max-height:320px; overflow-y:auto; overscroll-behavior:contain;
 }
 .search-result-row{
   display:flex; justify-content:space-between; align-items:center;

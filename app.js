@@ -526,13 +526,27 @@ async function renderWatchlist() {
 }
 
 // ---------- 검색 (공통 헬퍼) ----------
+function debounce(fn, wait) {
+  let timer = null;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+}
+
 function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
-  formEl.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const q = inputEl.value.trim();
-    if (!q) return;
+  let requestId = 0;
+
+  async function runSearch(q) {
+    const myRequestId = ++requestId; // 검색어가 비어도 증가시켜서, 이전에 날아간 요청을 무효화함
+
+    if (!q) {
+      resultsEl.hidden = true;
+      return;
+    }
 
     const results = await MarketData.searchSymbol(q, marketFilter);
+    if (myRequestId !== requestId) return; // 늦게 도착한 이전 요청 결과는 버림
 
     if (!results || results.length === 0) {
       resultsEl.innerHTML = `<div class="search-result-row"><span class="sr-name">검색 결과가 없어요</span></div>`;
@@ -565,6 +579,19 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
         inputEl.value = '';
       });
     });
+  }
+
+  const debouncedSearch = debounce((q) => runSearch(q), 250);
+
+  // 타이핑하는 대로 미리보기 (일부 단어만 입력해도 바로 결과가 뜸)
+  inputEl.addEventListener('input', () => {
+    debouncedSearch(inputEl.value.trim());
+  });
+
+  // 엔터/검색 버튼은 디바운스 없이 즉시 실행
+  formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(inputEl.value.trim());
   });
 }
 
