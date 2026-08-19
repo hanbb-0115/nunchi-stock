@@ -108,26 +108,91 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
 });
 
-// ---------- 위장 모드 (엑셀 스킨) ----------
+// ---------- 위장 테마 메뉴 ----------
 const SKIN_KEY = 'nunchi_skin_v1';
-const skinToggleBtn = document.getElementById('skinToggleBtn');
+// 새 테마를 추가할 땐 여기에 항목만 더하면 메뉴에 자동으로 나타남 (CSS 구현은 별도)
+const SKIN_OPTIONS = [
+  { id: 'none', label: '기본 화면' },
+  { id: 'excel', label: '엑셀' },
+  { id: 'word', label: '워드', comingSoon: true },
+  { id: 'ppt', label: '파워포인트', comingSoon: true },
+];
+const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
+
+// 상단바(기본 화면)의 skinMenuBtn과, 엑셀 위장 화면의 xlLogoBtn 둘 다
+// 같은 드롭다운을 연다 — 어느 쪽이 보이든 항상 테마를 바꿀 수 있게.
+const skinTriggers = [document.getElementById('skinMenuBtn'), document.getElementById('xlLogoBtn')];
+const skinDropdown = document.getElementById('skinDropdown');
+let activeSkinTrigger = null;
 
 function applySkin(skin) {
   document.documentElement.setAttribute('data-skin', skin);
   localStorage.setItem(SKIN_KEY, skin);
-  skinToggleBtn.title = skin === 'excel' ? '원래 화면으로' : '엑셀로 위장';
+  const opt = SKIN_OPTIONS.find((o) => o.id === skin);
+  const label = opt && skin !== 'none' ? `위장 중: ${opt.label} (클릭해서 변경)` : '화면 위장 테마 선택';
+  skinTriggers.forEach((btn) => {
+    if (btn.classList.contains('icon-btn')) btn.classList.toggle('skin-active', skin !== 'none');
+    btn.title = label;
+  });
+  renderSkinMenu();
+}
+
+function renderSkinMenu() {
+  const current = document.documentElement.getAttribute('data-skin') || 'none';
+  skinDropdown.innerHTML = SKIN_OPTIONS.map((o) => `
+    <button class="skin-option${o.id === current ? ' selected' : ''}" data-skin="${o.id}" ${o.comingSoon ? 'disabled' : ''}>
+      <span>${o.label}</span>
+      ${o.comingSoon ? '<span class="skin-badge">준비중</span>' : '<span class="skin-check">✓</span>'}
+    </button>
+  `).join('');
+
+  skinDropdown.querySelectorAll('.skin-option:not([disabled])').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      applySkin(btn.dataset.skin);
+      closeSkinMenu();
+    });
+  });
+}
+
+function openSkinMenu(triggerEl) {
+  activeSkinTrigger = triggerEl;
+  skinDropdown.hidden = false;
+  triggerEl.setAttribute('aria-expanded', 'true');
+
+  // 어느 버튼에서 열렸든 그 버튼 바로 아래에 붙게 위치 계산 (화면 밖으로 안 나가게 클램프)
+  const rect = triggerEl.getBoundingClientRect();
+  const dropdownWidth = 168;
+  let left = rect.left;
+  left = Math.min(left, window.innerWidth - dropdownWidth - 8);
+  left = Math.max(left, 8);
+  skinDropdown.style.top = `${rect.bottom + 6}px`;
+  skinDropdown.style.left = `${left}px`;
+}
+function closeSkinMenu() {
+  skinDropdown.hidden = true;
+  if (activeSkinTrigger) activeSkinTrigger.setAttribute('aria-expanded', 'false');
+  activeSkinTrigger = null;
 }
 
 applySkin(localStorage.getItem(SKIN_KEY) || 'none');
 
-skinToggleBtn.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-skin') || 'none';
-  applySkin(current === 'excel' ? 'none' : 'excel');
+skinTriggers.forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (skinDropdown.hidden) openSkinMenu(btn);
+    else closeSkinMenu();
+  });
+});
+document.addEventListener('click', (e) => {
+  if (!skinDropdown.hidden && !e.target.closest('#skinDropdown')) closeSkinMenu();
 });
 
-// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 엑셀로 위장
+// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') applySkin('excel');
+  if (e.key === 'Escape') {
+    applySkin(BOSS_KEY_SKIN);
+    closeSkinMenu();
+  }
 });
 
 // ---------- 탭 전환 ----------
