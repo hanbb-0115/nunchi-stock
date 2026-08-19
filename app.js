@@ -728,20 +728,55 @@ function advanceTicker() {
   }, TICKER_SLIDE_MS);
 }
 
-document.getElementById('popularTicker').addEventListener('click', () => {
-  const item = tickerItems[tickerIndex];
+function selectTickerItem(item) {
   if (!item) return;
   document.querySelector(`.tab[data-tab="${item.market === 'domestic' ? 'domestic' : 'global'}"]`)?.click();
   if (item.market === 'domestic') addDomesticCard(item);
   else addGlobalCard(item);
   track('card_add', { market: item.market, source: 'ticker' });
   MarketData.trackSearch(item.market, item.symbol);
+}
+
+document.getElementById('popularTicker').addEventListener('click', () => {
+  selectTickerItem(tickerItems[tickerIndex]);
 });
 document.getElementById('popularTicker').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
     document.getElementById('popularTicker').click();
   }
+});
+
+// ---------- 티커 호버 시 1~10위 전체 목록 ----------
+function renderTickerPanel() {
+  const panel = document.getElementById('tickerPanel');
+  panel.innerHTML = tickerItems
+    .map(
+      (it, i) => `
+        <button class="ticker-panel-row" data-index="${i}">
+          <span class="tp-rank">${i + 1}</span>
+          <span class="tp-name">${it.name}</span>
+          <span class="tp-label">${it.label || ''}</span>
+        </button>
+      `
+    )
+    .join('');
+  panel.querySelectorAll('.ticker-panel-row').forEach((btn) => {
+    btn.addEventListener('click', () => selectTickerItem(tickerItems[Number(btn.dataset.index)]));
+  });
+}
+
+const tickerWrap = document.getElementById('tickerWrap');
+const tickerPanel = document.getElementById('tickerPanel');
+tickerWrap.addEventListener('mouseenter', () => {
+  if (tickerItems.length === 0) return;
+  clearInterval(tickerTimer);
+  renderTickerPanel();
+  tickerPanel.hidden = false;
+});
+tickerWrap.addEventListener('mouseleave', () => {
+  tickerPanel.hidden = true;
+  if (tickerItems.length > 1) tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
 });
 
 setupSearch({

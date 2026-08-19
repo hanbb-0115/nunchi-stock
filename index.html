@@ -43,10 +43,13 @@
       <span class="brand-dot"></span>
       <span class="brand-name">눈치주식</span>
     </div>
-    <div id="popularTicker" class="popular-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
-      <div class="ticker-viewport">
-        <div id="tickerSlide" class="ticker-slide"></div>
+    <div id="tickerWrap" class="ticker-wrap">
+      <div id="popularTicker" class="popular-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
+        <div class="ticker-viewport">
+          <div id="tickerSlide" class="ticker-slide"></div>
+        </div>
       </div>
+      <div id="tickerPanel" class="ticker-panel" hidden></div>
     </div>
     <div class="topbar-actions">
       <button id="installBtn" class="icon-btn" title="앱으로 설치" aria-label="앱으로 설치" hidden>

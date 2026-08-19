@@ -64,9 +64,10 @@ body{
 .topbar-actions{display:flex; align-items:center; gap:8px; margin-left:auto; flex-shrink:0;}
 
 /* 인기 검색 티커 (타이틀바, 토스증권 스타일 세로 슬라이딩) */
+.ticker-wrap{position:relative; flex:1 1 auto; min-width:0;}
 .popular-ticker{
   display:flex; align-items:center;
-  flex:1 1 auto; min-width:0;
+  width:100%;
   background:var(--bg-elev); border:1px solid var(--line);
   border-radius:999px; padding:6px 12px;
   cursor:pointer;
@@ -90,6 +91,29 @@ body{
   flex-shrink:0; color:var(--accent); font-family:var(--mono); font-weight:800; font-size:11px;
 }
 .ticker-slide .ticker-name{overflow:hidden; text-overflow:ellipsis;}
+
+/* 티커 호버 시 펼쳐지는 1~10위 전체 목록 */
+.ticker-panel{
+  position:absolute; z-index:40;
+  top:calc(100% + 8px); right:0; left:0;
+  background:var(--bg-elev); border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  padding:6px; max-height:340px; overflow-y:auto;
+}
+.ticker-panel[hidden]{display:none;}
+.ticker-panel-row{
+  display:flex; align-items:center; gap:9px;
+  width:100%; padding:8px 10px; border:none; border-radius:9px;
+  background:transparent; color:var(--text); text-align:left;
+  cursor:pointer;
+}
+.ticker-panel-row:active{background:var(--bg-elev-2);}
+.ticker-panel-row .tp-rank{
+  flex-shrink:0; width:18px; text-align:center;
+  font-family:var(--mono); font-weight:800; font-size:12px; color:var(--accent);
+}
+.ticker-panel-row .tp-name{flex:1 1 auto; min-width:0; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ticker-panel-row .tp-label{flex-shrink:0; font-size:10.5px; color:var(--text-faint);}
 .icon-btn{
   background:var(--bg-elev); border:1px solid var(--line);
   color:var(--text-dim); border-radius:10px;
