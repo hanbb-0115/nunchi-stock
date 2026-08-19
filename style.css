@@ -356,7 +356,7 @@ body.no-select{user-select:none;}
 [data-skin="excel"] .drag-handle{color:var(--text-faint);}
 /* 셀 구분선처럼 보이도록 행 안에서도 열 경계에 세로선 */
 [data-skin="excel"] .idx-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
-[data-skin="excel"] .idx-spark{border-right:1px solid var(--line); margin-right:8px;}
+[data-skin="excel"] .idx-spark{display:none;}
 
 /* 탭 = 시트 탭으로 하단 이동 */
 [data-skin="excel"] .tabs{
