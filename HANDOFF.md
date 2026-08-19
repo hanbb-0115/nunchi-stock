@@ -1,29 +1,30 @@
 # 프로젝트 컨텍스트 — 눈치주식 (전 마켓 나우)
 
 Claude(채팅)에서 기획·프로토타입 작업을 마치고 Claude Code로 이어서 개발 중인 프로젝트예요.
-다른 PC/세션에서 이어서 작업할 때 아래 내용을 참고해주세요. (최종 업데이트: 2026-08-19, KIS 실연동 완료 후)
+다른 PC/세션에서 이어서 작업할 때 아래 내용을 참고해주세요. (최종 업데이트: 2026-08-19)
 
 ## 프로젝트 개요
 
 - **이름**: 눈치주식 (원래 "마켓 나우"였다가 컨셉이 명확해지면서 개명)
 - **목적**: 직장인이 일하면서 "눈치 안 보고" 빠르게 관심종목/지수 시세를 확인하는 앱.
   매수·매도 기능은 없음 — 순수 조회용.
-- **재밌는 기능**: 화면 위장 모드 — 상사가 지나갈 때 화면을 엑셀(예정: 워드/파워포인트도)처럼 보이게
+- **재밌는 기능**: 화면 위장 모드 — 상사가 지나갈 때 화면을 엑셀/워드/파워포인트처럼 보이게
   바꿀 수 있음. `Esc` 키가 보스키(즉시 위장 전환).
 
 ## 코드 위치 / 배포 상태
 
-- **GitHub**: https://github.com/hanbb-0115/nunchi-stock (저장소 루트 = 이 폴더 안의
-  `marketnow-stock-widget/` — 그 폴더 자체가 별도 git 저장소예요, 상위 `stock-widget/`은 git 아님)
+- **GitHub**: https://github.com/hanbb-0115/nunchi-stock — 이 폴더 자체가 저장소 루트예요
+  (하위 폴더 구조 아님, `index.html`/`app.js` 등이 바로 루트에 있음).
 - **프론트엔드 배포**: https://nunchi-stock.vercel.app (Vercel, GitHub main 브랜치 push하면 자동 배포)
 - **프록시 서버 배포**: https://nunchi-stock.onrender.com (Render 무료 티어, 마찬가지로 자동 배포.
-  단 무료 티어라 15분 유휴 시 슬립 → 첫 요청 응답이 몇 초 걸릴 수 있음)
-- 로컬 개발 시 정적 파일을 띄우려면 `.claude/launch.json`에 `marketnow-static` 설정이 있고,
-  PowerShell 기반 간이 서버(`.claude/static-server.ps1`)로 8080 포트에서 서빙함 — **이 PC엔 Node.js가
-  안 깔려있어서** 이 방식을 씀. 다른 PC에 Node가 있으면 그냥 아무 정적 서버(`npx serve` 등)나
-  `server-example/`처럼 `npm install && npm start` 써도 됨.
+  단 무료 티어라 15분 유휴 시 슬립 → 첫 요청 응답이 몇십 초 걸릴 수 있음, 콜드스타트라 정상임)
+  - Render 대시보드에 `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ENV=real` 환경변수 설정 완료됨
+    (2026-08-19) — 배포본에서도 실제 시세 나옴.
+- **로컬 개발**: Node.js 설치돼 있으면(권장) `server-example/`에서 `npm install && npm start`로
+  프록시 서버(3001 포트) 띄우고, 정적 파일은 `.claude/launch.json`의 `nunchi-stock` 설정으로
+  Claude Code 프리뷰가 자동으로 띄워줌(8090 포트) — 또는 `npx serve` 등 아무 정적 서버나 사용.
 
-## 폴더 구조 (marketnow-stock-widget/ 안)
+## 폴더 구조
 
 ```
 index.html / style.css / app.js / data.js   메인 앱 (바닐라 JS, 빌드 도구 없음)
@@ -31,95 +32,87 @@ manifest.json / sw.js / icons/               PWA 설치 지원
 server-example/                              KIS 프록시 + 검색 서버 (Node/Express, Render에 배포됨)
   server.js                                  실제 배포되는 서버 코드
   .env.example                               KIS_APP_KEY/SECRET 채우는 템플릿 (.env는 gitignore됨)
+  .env                                       실제 키 (git에 안 올라감 — 아래 "다른 PC 체크리스트" 참고)
 ```
 
 ## 지금 상태 — 뭐가 되고 뭐가 안 되는지
 
-### 되는 것
+### 되는 것 (2026-08-19 기준 전부 실제 서비스 중)
 - UI 전부 완성: 국내지수/해외지수/관심종목 탭, 드래그로 카드 순서 변경, 검색해서 카드로 고정,
   별(★) 눌러서 관심종목 추가/삭제, 다크·라이트 모드, PWA 설치 버튼
-- **종목 검색(LIKE 검색, 실시간 미리보기)이 실제로 동작함** — 코스피·코스닥·나스닥·뉴욕·아멕스
-  전체 종목 대상. 한국투자증권이 배포하는 공개 종목 마스터 파일(`kospi_code.mst`,
-  `nasmst.cod` 등, **API 키 불필요**)을 서버가 시작할 때 다운로드해서 메모리에 올려두고 로컬
-  LIKE 검색을 해줌 (`server-example/server.js`의 `/api/search`). 검색 결과 미리보기에
-  상위 8개까지는 실시간 시세도 같이 보여줌.
-- 화면 위장 모드(엑셀): 진짜 엑셀처럼 보이는 가짜 리본 메뉴/수식 입력줄/열머리글(A~E)/행번호/
-  시트탭(하단)/상태표시줄 구현. `data-skin="excel"`로 토글. 워드/파워포인트는 메뉴에 "준비중"
-  배지만 있고 아직 미구현 (app.js의 `SKIN_OPTIONS` 배열에 항목만 있음).
+- **종목 검색(LIKE 검색, 실시간 미리보기)** — 코스피·코스닥·나스닥·뉴욕·아멕스 전체 종목 대상.
+  KIS가 배포하는 공개 종목 마스터 파일(API 키 불필요)을 서버가 시작할 때 받아서 메모리에 올려두고
+  로컬 LIKE 검색 (`server-example/server.js`의 `/api/search`).
+- **화면 위장 모드 3종 완성**: 엑셀/워드/파워포인트 전부 리본 메뉴·제목표시줄·상태바 등 구조를
+  흉내낸 진짜 위장 버전. `data-skin="excel"/"word"/"ppt"`로 토글, `app.js`의 `SKIN_OPTIONS`.
+- **한국투자증권 Open API 실전투자 연동 완료** — 국내지수/해외지수/개별종목 시세 전부 실제
+  데이터 (`data.js`의 `USE_MOCK = false`). 로컬·Render 배포본 둘 다 동작 확인함.
+- **가격 단위 표시** — 국내는 "원", 해외는 "달러"를 가격 끝에 작은 회색 글씨로 표시.
+- **GA4(Google Analytics) 연동** — 측정 ID `G-LG2FL8KJ6B`. 탭 전환/검색/관심종목 추가·삭제/
+  위장모드 전환(보스키 포함)/PWA 설치에 커스텀 이벤트 추적. analytics.google.com에서 확인.
 
-### 안 되는 것 / 막힌 것
-- 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고).
-- Render(`nunchi-stock.onrender.com`)에는 아직 실제 KIS App Key/Secret 환경변수가 설정
-  안 되어 있음 — 로컬(`localhost:3001`)에서만 실연동 검증 완료. 배포본을 실제로 쓰려면
-  Render 대시보드에서 `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ENV=real` 환경변수를 설정해야 함
-  (사용자가 직접 Render 로그인해서 해야 하는 작업).
+### 안 되는 것 / 아직 안 한 것
+- 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고) — 유일하게 남은 큰 작업.
 
-### 2026-08-19 — KIS 실전투자 API 실연동 완료
-- App Key/Secret 발급받아 `server-example/.env`에 설정, `data.js`의 `USE_MOCK`을 `false`로
-  전환. 국내지수/해외지수/개별종목 시세 전부 실제 KIS API로 확인 완료 (브라우저 E2E 테스트로
-  삼성전자 카드 추가까지 검증함).
-- **해외지수 API를 통째로 교체함**: 기존에 쓰려던 개별종목 시세 API(`HHDFS00000300` +
-  `EXCD`/`SYMB`)는 지수 조회 시 빈 값만 돌아옴. 대신 KIS 공식 GitHub 샘플
-  (`examples_user/overseas_stock/overseas_stock_functions.py`)에서 찾은 지수 전용 API를
-  씀: `tr_id=FHKST03030100`, 엔드포인트
-  `/uapi/overseas-price/v1/quotations/inquire-daily-chartprice`,
-  `FID_COND_MRKT_DIV_CODE=N`(해외지수), `FID_INPUT_ISCD`에 `.DJI`/`COMP`/`SPX` 그대로
-  입력 (EXCD 조합 아님). 응답은 `output1.ovrs_nmix_prpr`(현재가)/`ovrs_nmix_prdy_vrss`(전일대비)
-  /`prdy_ctrt`(등락률). `server.js`의 `OVERSEAS_INDEX_LIST`/`/api/global-indices` 참고.
-- **실전투자 키의 초당 호출 한도가 낮음** — 여러 지수를 `Promise.all`로 동시 호출하면
-  "초당 거래건수를 초과하였습니다" 에러가 자주 남. `server.js`에 전역 직렬화 큐
-  (`throttleKisCall`, 호출 간 700ms 간격) + 레이트리밋 에러 시 자동 재시도(최대 2회)를
-  추가해서 해결함 (`kisGet`/`kisGetOnce` 참고).
-- **로컬 프록시 서버를 편하게 테스트하려고 `data.js`에 환경 분기 추가**: `location.hostname`이
-  `localhost`/`127.0.0.1`이면 `PROXY_BASE_URL`을 `http://localhost:3001`로, 아니면 기존
-  Render 주소로 자동 전환.
-- **미리보기 브라우저(Claude Code의 in-app Browser 패널)에서 다른 로컬 포트(3001)로의
-  fetch가 막히는 현상 발견** — 직접 URL 접속은 되는데 JS `fetch()`만 `ERR_FAILED`로 실패함.
-  이건 그 프리뷰 패널 자체의 샌드박스 제약으로 보이고, 실제 사용자 Chrome에서는 정상 동작함
-  (Claude in Chrome으로 재검증해서 확인함). 로컬 프록시 연동 디버깅할 땐 in-app 프리뷰 패널
-  말고 실제 브라우저로 확인할 것.
-- 이 작업 중 Node.js가 이 PC에 새로 설치됨 (winget으로, LTS 24.19.0) — 위 22번째 줄의
-  "이 PC엔 Node.js가 안 깔려있어서" 문구는 이제 사실이 아님. 다만 새 터미널 세션에서
-  PATH가 바로 안 잡힐 수 있어서 `C:\Program Files\nodejs`를 PATH에 명시적으로 추가해야
-  할 수도 있음.
-- **지수/개별종목 가격 끝에 단위 표시 추가** — `app.js`의 `renderCard`에서 국내(`market:
-  'domestic'`)는 "원", 해외(`market: 'overseas'`)는 "달러"를 가격 뒤에 작은 회색 글씨로
-  붙임 (`.idx-unit`, `style.css`). 지수 카드는 원래 `market` 필드가 없었는데 이때 추가함
-  (`loadDomestic`/`loadGlobal`에서 index 아이템에도 `market` 태깅).
-- **GA4(Google Analytics) 연동** — 측정 ID `G-LG2FL8KJ6B`로 `index.html`에 gtag.js 스크립트
-  삽입, `app.js`에 `track()` 헬퍼 추가해서 탭 전환/검색/관심종목 추가·삭제/위장모드 전환
-  (보스키 포함)/PWA 설치 프롬프트에 커스텀 이벤트 붙임. 통계는 analytics.google.com에서
-  확인 (사용자가 직접 만든 GA4 속성).
+## 다른 PC에서 이어서 작업할 때 체크리스트
+
+`git pull`로 코드는 그대로 받아지지만, **PC마다 다시 설정해야 하는 것들**이 있어요:
+
+1. **Node.js 설치 확인** — `node --version`으로 확인. 없으면 `winget install --id OpenJS.NodeJS.LTS -e`
+   (관리자 권한 필요할 수 있음). 설치 직후엔 새 터미널에서도 PATH가 안 잡힐 수 있어서
+   `C:\Program Files\nodejs`를 PATH에 수동으로 추가해야 할 수도 있음.
+2. **git 사용자 정보 설정** — 새 PC면 `git config --global user.name`/`user.email`이 비어있어서
+   커밋이 안 됨. `git config --global user.name "hanbb-0115"` /
+   `git config --global user.email "w961205@gmail.com"`로 설정.
+   **주의: Claude가 git config를 대신 실행하면 안 되는 정책이라, 이건 사용자가 직접 해야 함.**
+3. **`server-example/.env` 파일 재생성** — `.env`는 gitignore라 git에 안 올라감(의도적 —
+   키를 git에 커밋하면 안 됨). 새 PC에서 로컬 프록시 서버(`npm start`)를 테스트하려면
+   `server-example/.env.example`을 복사해서 App Key/Secret을 채워야 함. 값은 이 문서에
+   적어두지 않았으니 **Render 대시보드(Environment 탭)에서 기존 값을 확인**하거나,
+   apiportal.koreainvestment.com에서 재확인. 형식:
+   ```
+   KIS_APP_KEY=(Render 대시보드에서 확인)
+   KIS_APP_SECRET=(Render 대시보드에서 확인)
+   KIS_ENV=real
+   PORT=3001
+   ```
+   로컬 테스트 없이 배포본(Vercel+Render)만 확인할 거면 이 단계는 건너뛰어도 됨.
+4. **GA4 대시보드 접근** — analytics.google.com은 사용자 구글 계정 로그인만 하면 PC 상관없이
+   바로 보임, 별도 설정 불필요.
+5. **npm install** — `server-example/`에서 로컬 프록시 서버 처음 띄울 때 1회.
 
 ## 알아두면 좋은 실수/교훈
 
-- **국내 종목 마스터 파일(CP949) 파싱 버그**: 처음에 파일 전체를 문자열로 디코딩한 뒤 문자 단위로
-  고정폭 슬라이싱했더니, 한글이 2바이트라 종목명 뒤에 다음 필드 값이 섞여 나왔음. 원본
-  **바이트 버퍼**에서 줄 단위로 나눈 뒤 그 바이트 슬라이스만 디코딩하는 방식으로 고침
-  (`server.js`의 `splitBufferLines`/`parseDomesticMst` 참고). 코스피 Part2는 228바이트,
-  코스�드 Part2는 222바이트로 서로 다름 — 종목명 폭은 "줄 전체 길이 - Part2 길이"로 매번
-  동적 계산해야 함.
-- **curl로 한글 쿼리 테스트할 때 주의**: 이 PC(Windows 한글 로케일)의 git bash에서
-  `curl --data-urlencode`로 한글을 보내면 CP949로 잘못 인코딩되어 서버에 깨진 값이 도착함.
-  브라우저로 테스트하면 정상. 검색 API 디버깅할 땐 curl 말고 브라우저에서 직접 확인할 것.
-- **엑셀 위장 모드 디자인 방향**: "진짜 엑셀 UI처럼 구조를 흉내" ↔ "레이아웃은 그대로 두고
-  색상만 엑셀로" 사이를 몇 번 왔다갔다함. **지금은 전자(진짜 위장 모드, 리본/수식줄 등 구조
-  흉내)로 확정**된 상태. 색상만 바꾸는 버전은 라이트모드랑 구분이 잘 안 된다는 피드백으로
-  되돌아감.
-- **로컬 정적 서버는 세션마다 수동으로 켜야 함** — Claude Code가 테스트 끝나고 꺼두면 사용자가
-  `localhost:8080` 접속 시 안 열림. 작업 끝날 때까지 계속 켜두는 게 나음.
-- Vercel 배포 직후엔 CDN 엣지 노드마다 캐시 반영 시점이 달라서, 같은 URL인데 요청마다 새/구
-  버전이 섞여 나올 수 있음 (몇 분 내 자동 해소됨, 코드 문제 아님).
+- **국내 종목 마스터 파일(CP949) 파싱 버그**: 파일 전체를 문자열로 디코딩한 뒤 문자 단위로
+  고정폭 슬라이싱하면 한글이 2바이트라 종목명 뒤 필드가 밀림. 원본 **바이트 버퍼**에서 줄 단위로
+  나눈 뒤 그 바이트 슬라이스만 디코딩해야 함 (`server.js`의 `splitBufferLines`/`parseDomesticMst`).
+  코스피 Part2는 228바이트, 코스닥 Part2는 222바이트로 달라서 종목명 폭은 "줄 전체 길이 - Part2
+  길이"로 매번 동적 계산.
+- **curl로 한글 쿼리 테스트할 때 주의**: Windows 한글 로케일 git bash에서 `curl --data-urlencode`로
+  한글을 보내면 CP949로 잘못 인코딩됨. 브라우저로 테스트하면 정상.
+- **해외지수는 개별종목 시세 API(`HHDFS00000300`+EXCD/SYMB)로 조회 안 됨** — 빈 값만 돌아옴.
+  지수 전용 API(`tr_id=FHKST03030100`, `/uapi/overseas-price/v1/quotations/inquire-daily-chartprice`,
+  `FID_COND_MRKT_DIV_CODE=N`, `FID_INPUT_ISCD`에 `.DJI`/`COMP`/`SPX` 그대로) 사용해야 함.
+- **KIS 실전투자 키는 초당 호출 한도가 낮음** — 여러 지수를 동시 호출하면 "초당 거래건수를
+  초과하였습니다" 에러가 자주 남. `server.js`에 전역 요청 큐(700ms 간격) + 재시도 +
+  **15초 TTL 응답 캐시**(방문자 수와 무관하게 KIS 호출 빈도 고정, `withCache` 참고)로 해결함.
+- **Claude Code의 in-app 프리뷰 브라우저 패널은 로컬의 다른 포트(예: 8090 → 3001)로의 JS
+  `fetch()`를 막음** — 직접 URL 접속은 되는데 fetch만 `ERR_FAILED`. 프리뷰 패널 자체의 샌드박스
+  제약이고 실제 사용자 브라우저에서는 정상 동작함. 로컬 프록시 연동 디버깅할 땐 실제 브라우저
+  (Claude in Chrome 등)로 확인할 것.
+- **엑셀 위장 모드 디자인 방향**: "진짜 UI 구조 흉내" ↔ "레이아웃 그대로 색상만 변경" 사이를
+  왔다갔다하다가 **전자(구조 흉내)로 확정**. 색상만 바꾸는 버전은 라이트모드랑 구분이 안 된다는
+  피드백 때문.
+- **로컬 정적 서버는 세션마다 수동으로 켜야 함** — 작업 끝날 때까지 계속 켜두는 게 나음.
+- Vercel 배포 직후엔 CDN 엣지 노드마다 캐시 반영 시점이 달라서 몇 분간 새/구 버전이 섞여 나올
+  수 있음 (자동 해소됨, 코드 문제 아님).
 
-## 다음에 할 일 (우선순위 순)
+## 다음에 할 일
 
-1. **Render 환경변수 설정** — Render 대시보드(사용자가 직접 로그인)에서
-   `nunchi-stock-kis-proxy` 서비스에 `KIS_APP_KEY`/`KIS_APP_SECRET`/`KIS_ENV=real` 환경변수
-   설정해서 배포본(`nunchi-stock.onrender.com`)도 실제 시세가 나오게 하기. 로컬은 이미 됨.
-2. 워드/파워포인트 위장 테마 구현 (엑셀 테마와 같은 패턴: `app.js`의 `SKIN_OPTIONS`에 이미
-   자리 있음, `style.css`에 `[data-skin="word"]`/`[data-skin="ppt"]` 섹션 추가 + 필요하면
-   `index.html`에 각 테마용 가짜 UI 마크업 추가)
-3. 앱인토스 미니앱 포팅 (`@apps-in-toss/web-framework` 기반, 로그인/결제 SDK 불필요)
+1. **앱인토스 미니앱 포팅** (`@apps-in-toss/web-framework` 기반, 로그인/결제 SDK 불필요) — 유일하게
+   남은 큰 작업. 핵심 UI/데이터 로직(`data.js`, 화면 렌더링)은 그대로 재사용 가능.
+2. (선택) Render 무료 티어의 콜드스타트가 거슬리면 유료 플랜 고려, 또는 UptimeRobot 같은 걸로
+   주기적 핑 (다만 무료 티어 남용으로 보일 수 있어 권장하진 않음).
 
 ## 그동안의 기획 결정 (배경 참고용)
 
