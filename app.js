@@ -119,9 +119,7 @@ const SKIN_OPTIONS = [
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
-// 상단바(기본 화면)의 skinMenuBtn과, 엑셀 위장 화면의 xlLogoBtn 둘 다
-// 같은 드롭다운을 연다 — 어느 쪽이 보이든 항상 테마를 바꿀 수 있게.
-const skinTriggers = [document.getElementById('skinMenuBtn'), document.getElementById('xlLogoBtn')];
+const skinTriggers = [document.getElementById('skinMenuBtn')];
 const skinDropdown = document.getElementById('skinDropdown');
 let activeSkinTrigger = null;
 
