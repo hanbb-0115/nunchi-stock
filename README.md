@@ -4,21 +4,19 @@
 
 ## 지금 상태
 
-- 목(mock) 데이터로 동작해서 **API 키 없이 바로 열어봐도** 화면이 잘 나와요.
-- `index.html`을 브라우저로 더블클릭하면 바로 확인 가능해요.
+- 한국투자증권 Open API 실전투자 연동 완료 — 국내/해외 지수·개별종목 시세 전부 실제 데이터예요
+  (`data.js`의 `USE_MOCK = false`). 배포본(Vercel+Render)이 이미 이 상태로 떠 있어요.
+- 처음부터 새로 셋업할 땐 App Key/Secret 없이도 `USE_MOCK`을 `true`로 바꾸면 mock 데이터로
+  화면만 먼저 확인할 수 있어요 (아래 1단계 진행 전 임시로).
 
 ## 폴더 구조
 
+이 저장소 자체가 루트예요 (하위 폴더 아님):
+
 ```
-stock-widget/
-├── index.html        메인 화면
-├── style.css          다크 테마 스타일 (상승=빨강, 하락=파랑 — 국내 증시 관례)
-├── app.js             화면 로직 (탭 전환, 검색, 관심종목)
-├── data.js            데이터 레이어 (지금은 mock, 실 API 연동 지점 표시됨)
-├── manifest.json       PWA 설치 설정
-├── sw.js              오프라인 캐싱 / 설치 지원
-├── icons/             앱 아이콘
-└── server-example/     실 시세 연동용 프록시 서버 예시 (Node/Express)
+index.html / style.css / app.js / data.js   메인 앱 (바닐라 JS, 빌드 도구 없음)
+manifest.json / sw.js / icons/               PWA 설치 지원
+server-example/                              실 시세 연동용 프록시 서버 (Node/Express, Render에 배포됨)
 ```
 
 ## 1단계 — 실제 시세 연동하기
@@ -88,7 +86,7 @@ stock-widget/
 ## 2단계 — PWA로 배포하기
 
 정적 파일이라 아래 같은 곳에 그대로 올리면 끝이에요:
-- Vercel, Netlify, Cloudflare Pages 등에 `stock-widget/` 폴더 업로드
+- Vercel, Netlify, Cloudflare Pages 등에 이 저장소 루트를 그대로 연결(이미 Vercel에 배포되어 있음: nunchi-stock.vercel.app)
 - 배포되면 크롬/엣지에서 주소창 옆 "설치" 아이콘으로 데스크톱에 설치 가능
 - 아이폰 사파리는 공유 버튼 → "홈 화면에 추가"로 설치 가능
 
