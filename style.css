@@ -322,8 +322,14 @@ body.no-select{user-select:none;}
 .xl-colheaders .xl-corner{width:26px; border-right:1px solid var(--line);}
 .xl-colheaders span:not(.xl-corner){flex:1; padding:3px 0; border-right:1px solid var(--line);}
 
-/* 본문 = 시트 영역 */
-[data-skin="excel"] .panels{padding:0 0 0 26px; position:relative; background:var(--bg-elev);}
+/* 본문 = 시트 영역 — 빈 공간까지 셀 눈금선이 이어지도록 배경에 그리드 패턴을 깔아둠 */
+[data-skin="excel"] .panels{
+  padding:0 0 0 26px; position:relative; background:var(--bg-elev);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size:88px 22px;
+}
 [data-skin="excel"] .search-row{margin:8px 8px 8px 0;}
 [data-skin="excel"] .search-row input{border-radius:0;}
 [data-skin="excel"] .btn-primary{border-radius:0; background:var(--accent);}
@@ -348,6 +354,9 @@ body.no-select{user-select:none;}
 [data-skin="excel"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
 [data-skin="excel"] .idx-name{font-weight:600; font-size:13px;}
 [data-skin="excel"] .drag-handle{color:var(--text-faint);}
+/* 셀 구분선처럼 보이도록 행 안에서도 열 경계에 세로선 */
+[data-skin="excel"] .idx-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+[data-skin="excel"] .idx-spark{border-right:1px solid var(--line); margin-right:8px;}
 
 /* 탭 = 시트 탭으로 하단 이동 */
 [data-skin="excel"] .tabs{
