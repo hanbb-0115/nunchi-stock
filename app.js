@@ -687,24 +687,56 @@ async function loadPopularTicker() {
     MarketData.getPopularSearches('domestic'),
     MarketData.getPopularSearches('overseas'),
   ]);
-  tickerItems = [...domestic.map((it) => ({ ...it, market: 'domestic' })), ...overseas.map((it) => ({ ...it, market: 'overseas' }))]
+  const ranked = [...domestic.map((it) => ({ ...it, market: 'domestic' })), ...overseas.map((it) => ({ ...it, market: 'overseas' }))]
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
   tickerIndex = 0;
 
   clearInterval(tickerTimer);
-  const hasItems = tickerItems.length > 0;
+  const hasItems = ranked.length > 0;
   TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = !hasItems; });
-  if (!hasItems) return;
+  if (!hasItems) {
+    tickerItems = [];
+    return;
+  }
+
+  // 순위/이름만 있는 목록에 시세도 같이 보여주기 위해 종목별로 시세를 붙임
+  // (클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음)
+  tickerItems = await Promise.all(
+    ranked.map(async (it) => {
+      try {
+        const q = await MarketData.getQuote(it.symbol, it.name, it.market, it.excd);
+        return { ...it, price: q.price, change: q.change, changePct: q.changePct };
+      } catch {
+        return it; // 시세 조회 실패해도 순위/이름은 그대로 보여줌
+      }
+    })
+  );
   paintTickerSlide();
   if (tickerItems.length > 1) {
     tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
   }
 }
 
+function tickerQuoteHtml(it, priceClass, changeClassPrefix) {
+  if (typeof it.price !== 'number') return '';
+  const unit = it.market === 'overseas' ? '달러' : '원';
+  return (
+    `<span class="${priceClass}">${formatPrice(it.price)}${unit}</span>` +
+    `<span class="${changeClassPrefix} ${changeClass(it.change)}">${changeSign(it.changePct)}${it.changePct.toFixed(2)}%</span>`
+  );
+}
+
 function paintTickerSlide() {
   const item = tickerItems[tickerIndex];
-  const html = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${escapeHtml(item.name)}</span>`;
+  // 슬라이딩 한 줄짜리 티커는 폭이 좁아서(특히 위장 모드 제목표시줄) 가격까지
+  // 넣으면 종목명이 밀려서 안 보임 — 등락률만 넣고, 가격은 호버 패널에서 보여줌
+  const changeHtml =
+    typeof item.changePct === 'number'
+      ? `<span class="ticker-change ${changeClass(item.change)}">${changeSign(item.changePct)}${item.changePct.toFixed(2)}%</span>`
+      : '';
+  const html =
+    `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${escapeHtml(item.name)}</span>` + changeHtml;
   TICKER_INSTANCES.forEach(({ slideEl }) => { slideEl.innerHTML = html; });
 }
 
@@ -736,7 +768,7 @@ function renderTickerPanel(panelEl) {
         <button class="ticker-panel-row" data-index="${i}">
           <span class="tp-rank">${i + 1}</span>
           <span class="tp-name">${escapeHtml(it.name)}</span>
-          <span class="tp-label">${escapeHtml(it.label || '')}</span>
+          <span class="tp-quote">${tickerQuoteHtml(it, 'tp-price', 'tp-change') || '<span class="tp-price tp-price-empty">-</span>'}</span>
         </button>
       `
     )
