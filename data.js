@@ -16,8 +16,8 @@
  * ============================================================
  */
 
-const USE_MOCK = true; // server-example을 실행하고 .env에 키를 채운 뒤 false로 변경
-const PROXY_BASE_URL = 'http://localhost:3001'; // 프록시 서버 주소 (배포 후엔 배포 주소로 변경)
+const USE_MOCK = true; // KIS App Key 발급받으면 false로 변경 (검색은 이미 실서버 연결되어 있음)
+const PROXY_BASE_URL = 'https://nunchi-stock.onrender.com'; // 프록시 서버 (Render 배포)
 
 const MOCK_DOMESTIC = [
   { id: 'KOSPI', name: '코스피', sub: 'KOSPI', price: 2634.15, change: 12.42, changePct: 0.47,
@@ -97,21 +97,25 @@ const MarketData = {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
-    if (USE_MOCK) {
-      const results = SEARCH_DB.filter((it) => {
-        if (marketFilter && it.market !== marketFilter) return false;
-        return it.name.toLowerCase().includes(q) || it.symbol.toLowerCase().includes(q);
-      });
-      return delay(results);
+    // 검색은 USE_MOCK과 무관하게 항상 실 서버(코스피/코스닥/나스닥/뉴욕/아멕스 전체
+    // 종목 마스터 기반 LIKE 검색)를 먼저 시도함 — KIS App Key 없이도 동작하는
+    // 기능이라 시세 연동 여부와 분리해뒀어요. server-example/server.js 참고.
+    // 서버가 잠들어있거나(Render 무료 티어) 네트워크 문제가 있으면
+    // 큐레이션 목록(SEARCH_DB)으로 대체해요.
+    try {
+      const params = new URLSearchParams({ q });
+      if (marketFilter) params.set('market', marketFilter);
+      const res = await fetch(`${PROXY_BASE_URL}/api/search?${params.toString()}`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      // 네트워크 오류 등 — 아래 폴백으로 진행
     }
 
-    // 실 연동: 서버가 코스피/코스닥/나스닥/뉴욕/아멕스 전체 종목 마스터 파일을
-    // 미리 받아서 들고 있다가 LIKE 검색해줌 (server-example/server.js 참고)
-    const params = new URLSearchParams({ q });
-    if (marketFilter) params.set('market', marketFilter);
-    const res = await fetch(`${PROXY_BASE_URL}/api/search?${params.toString()}`);
-    if (!res.ok) return [];
-    return await res.json();
+    const results = SEARCH_DB.filter((it) => {
+      if (marketFilter && it.market !== marketFilter) return false;
+      return it.name.toLowerCase().includes(q) || it.symbol.toLowerCase().includes(q);
+    });
+    return USE_MOCK ? delay(results) : results;
   },
 
   async getQuote(symbol, name, market, excd) {
