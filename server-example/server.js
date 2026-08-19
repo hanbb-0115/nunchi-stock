@@ -216,23 +216,41 @@ async function downloadMst(filename) {
   const buf = Buffer.from(await res.arrayBuffer());
   const zip = new AdmZip(buf);
   const entry = zip.getEntries()[0];
-  return iconv.decode(entry.getData(), 'cp949');
+  return entry.getData(); // 디코딩 전 원본 바이트 그대로 반환 (CP949는 한글이 2바이트라 문자 단위로 자르면 자리가 밀림)
 }
 
-// 국내(코스피/코스닥) 마스터: 종목코드(9) + 표준코드(12) + 종목명(43) + ...
-function parseDomesticMst(text, label) {
-  return text
-    .split(/\r?\n/)
-    .map((line) => {
-      const symbol = line.slice(0, 9).trim();
-      const name = line.slice(21, 21 + 43).trim();
+function splitBufferLines(buf) {
+  const lines = [];
+  let start = 0;
+  for (let i = 0; i < buf.length; i++) {
+    if (buf[i] === 0x0a) {
+      let end = i;
+      if (end > start && buf[end - 1] === 0x0d) end--; // \r 제거
+      if (end > start) lines.push(buf.slice(start, end));
+      start = i + 1;
+    }
+  }
+  if (start < buf.length) lines.push(buf.slice(start));
+  return lines;
+}
+
+// 국내(코스피/코스닥) 마스터: 종목코드(9바이트) + 표준코드(12바이트) + 종목명(가변) + Part2(고정폭, 끝에서부터)
+// Part2 길이가 코스피 228바이트/코스닥 222바이트로 서로 달라서, 종목명 폭은 "전체 길이 - Part2 길이"로 매 줄마다 계산해야 함
+// (바이트 오프셋 21/43은 한국투자증권 공식 kis_kospi_code_mst.py 기준으로 실제 다운로드해 검증함)
+function parseDomesticMst(buf, label, part2Width) {
+  return splitBufferLines(buf)
+    .map((lineBuf) => {
+      if (lineBuf.length <= 21 + part2Width) return null;
+      const symbol = iconv.decode(lineBuf.slice(0, 9), 'cp949').trim();
+      const name = iconv.decode(lineBuf.slice(21, lineBuf.length - part2Width), 'cp949').trim();
       return { symbol, name, market: 'domestic', label };
     })
-    .filter((r) => r.symbol && r.name);
+    .filter((r) => r && r.symbol && r.name);
 }
 
-// 해외 거래소 마스터: 탭 구분, 5번째=심볼, 7번째=한글명, 8번째=영문명
-function parseOverseasMst(text, excd, label) {
+// 해외 거래소 마스터: 탭 구분 텍스트라 디코딩 후 분리해도 자리가 안 밀림 (안전)
+function parseOverseasMst(buf, excd, label) {
+  const text = iconv.decode(buf, 'cp949');
   return text
     .split(/\r?\n/)
     .map((line) => {
@@ -251,7 +269,7 @@ async function loadSearchIndex() {
       downloadMst('kospi_code.mst.zip'),
       downloadMst('kosdaq_code.mst.zip'),
     ]);
-    const domestic = [...parseDomesticMst(kospi, 'KOSPI'), ...parseDomesticMst(kosdaq, 'KOSDAQ')];
+    const domestic = [...parseDomesticMst(kospi, 'KOSPI', 228), ...parseDomesticMst(kosdaq, 'KOSDAQ', 222)];
 
     const [nas, nys, ams] = await Promise.all([
       downloadMst('nasmst.cod.zip'),
