@@ -1,0 +1,15 @@
+{
+  "name": "눈치주식 - 관심종목 시세 위젯",
+  "short_name": "눈치주식",
+  "description": "일하면서 눈치 안 보고 빠르게 확인하는 코스피·코스닥·나스닥·다우·S&P500과 관심종목 시세",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0d10",
+  "theme_color": "#0b0d10",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
