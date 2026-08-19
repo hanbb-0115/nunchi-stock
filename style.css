@@ -69,6 +69,7 @@ body{
   cursor:pointer;
 }
 .icon-btn:active{transform:scale(0.94);}
+.icon-btn[hidden]{display:none;}
 .icon-btn.spin svg{animation:spin 0.7s linear;}
 @keyframes spin{to{transform:rotate(360deg);}}
 

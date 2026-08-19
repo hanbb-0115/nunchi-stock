@@ -83,6 +83,31 @@ document.getElementById('themeToggleBtn').addEventListener('click', () => {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 });
 
+// ---------- 설치 (PWA) ----------
+// 크로미움 계열(엣지/크롬)에서만 지원. 설치 가능한 상태일 때만 버튼이 나타남.
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.hidden = false;
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  installBtn.hidden = true;
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  if (choice.outcome !== 'accepted') installBtn.hidden = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  installBtn.hidden = true;
+  deferredInstallPrompt = null;
+});
+
 // ---------- 탭 전환 ----------
 document.querySelectorAll('.tab').forEach((btn) => {
   btn.addEventListener('click', () => {
