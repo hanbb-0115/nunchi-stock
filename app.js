@@ -108,6 +108,28 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
 });
 
+// ---------- 위장 모드 (엑셀 스킨) ----------
+const SKIN_KEY = 'nunchi_skin_v1';
+const skinToggleBtn = document.getElementById('skinToggleBtn');
+
+function applySkin(skin) {
+  document.documentElement.setAttribute('data-skin', skin);
+  localStorage.setItem(SKIN_KEY, skin);
+  skinToggleBtn.title = skin === 'excel' ? '원래 화면으로' : '엑셀로 위장';
+}
+
+applySkin(localStorage.getItem(SKIN_KEY) || 'none');
+
+skinToggleBtn.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-skin') || 'none';
+  applySkin(current === 'excel' ? 'none' : 'excel');
+});
+
+// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 엑셀로 위장
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') applySkin('excel');
+});
+
 // ---------- 탭 전환 ----------
 document.querySelectorAll('.tab').forEach((btn) => {
   btn.addEventListener('click', () => {
