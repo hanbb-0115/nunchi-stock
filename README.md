@@ -75,9 +75,12 @@ stock-widget/
 ### 인기 검색어
 
 검색 결과를 클릭해서 카드로 추가할 때(타이핑 중간값은 제외) Upstash Redis에 집계해서,
-국내지수/해외지수 탭 검색창 아래에 순위 칩으로 보여줘요. 클릭하면 바로 카드로 추가돼요.
+타이틀바에 토스증권 스타일 세로 슬라이딩 티커로 보여줘요(국내+해외 합산 1~10위, 3초마다
+자동 슬라이드). 마우스를 올리면 자동 슬라이드가 멈추고 1~10위 전체 목록이 드롭다운으로
+펼쳐져요. 어느 쪽을 클릭해도 해당 종목 탭으로 전환하며 카드로 추가돼요.
 
-- `POST /api/track-search` `{ market, symbol }` — 집계
+- `POST /api/track-search` `{ market, symbol }` — 집계 (KIS 마스터에 있는 종목코드만 허용 —
+  검증 없이 저장하면 임의 문자열이 응답에 그대로 실려서 XSS로 이어질 수 있어서 막아둠)
 - `GET /api/popular-searches?market=domestic&limit=10` — 상위 N개 조회
 - `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` 환경변수가 없으면 이 기능만 조용히 꺼져요
   (다른 기능엔 영향 없음).
