@@ -19,6 +19,8 @@
  */
 
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const AdmZip = require('adm-zip');
@@ -45,9 +47,28 @@ if (!KIS_APP_KEY || !KIS_APP_SECRET) {
   console.warn('[경고] .env에 KIS_APP_KEY / KIS_APP_SECRET이 없어요. server-example/.env.example 참고.');
 }
 
-// ---------- 1) 접근 토큰 발급 (캐싱) ----------
+// ---------- 1) 접근 토큰 발급 (메모리 + 파일 캐싱) ----------
+// 토큰은 보통 24시간 유효한데 메모리에만 캐싱하면 서버를 재시작할 때마다(로컬 개발 중
+// 재시작, Render 무료 티어의 슬립→재기동 등) 아직 안 만료된 토큰이 있어도 새로 발급받게
+// 됨 — 발급될 때마다 KIS가 알림톡을 보내서 재시작이 잦으면 알림이 계속 옴. 파일에도
+// 같이 저장해뒀다가, 재시작 후에도 파일의 토큰이 아직 유효하면 그대로 재사용해서
+// 불필요한 재발급(and 알림톡)을 줄인다.
+const TOKEN_CACHE_FILE = path.join(__dirname, '.token-cache.json');
 let cachedToken = null;
 let cachedTokenExpiry = 0;
+
+function loadTokenCacheFromDisk() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(TOKEN_CACHE_FILE, 'utf8'));
+    if (raw.token && raw.expiresAt > Date.now()) {
+      cachedToken = raw.token;
+      cachedTokenExpiry = raw.expiresAt;
+    }
+  } catch (err) {
+    // 파일이 없거나 깨졌으면 그냥 새로 발급받음
+  }
+}
+loadTokenCacheFromDisk();
 
 async function getAccessToken() {
   if (cachedToken && Date.now() < cachedTokenExpiry) return cachedToken;
@@ -68,6 +89,11 @@ async function getAccessToken() {
 
   cachedToken = data.access_token;
   cachedTokenExpiry = Date.now() + (data.expires_in - 300) * 1000; // 5분 여유
+  try {
+    fs.writeFileSync(TOKEN_CACHE_FILE, JSON.stringify({ token: cachedToken, expiresAt: cachedTokenExpiry }));
+  } catch (err) {
+    // 파일 저장 실패해도 이번 요청 자체는 계속 진행 (다음 재시작 때 다시 발급받을 뿐)
+  }
   return cachedToken;
 }
 
