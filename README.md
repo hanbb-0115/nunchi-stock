@@ -34,6 +34,10 @@ stock-widget/
    KIS_APP_KEY=발급받은키
    KIS_APP_SECRET=발급받은시크릿
    KIS_ENV=real   # 모의투자 계좌면 virtual
+
+   # 인기 검색어 기능 쓰려면 (선택) — upstash.com 무료 Redis
+   UPSTASH_REDIS_REST_URL=
+   UPSTASH_REDIS_REST_TOKEN=
    ```
 4. `npm start`로 프록시 서버 실행 (기본 포트 3001)
 5. `data.js` 상단의 `USE_MOCK`을 `false`로 변경
@@ -67,6 +71,16 @@ stock-widget/
   않음 — 빠르고, App Key 없이도 동작해요).
 - 24시간마다 자동으로 마스터 파일을 다시 받아서 상장/폐지를 반영해요.
 - 프론트(`app.js`)는 입력할 때마다 250ms 디바운스 후 자동으로 미리보기를 띄워요 (검색 버튼 없이도 동작).
+
+### 인기 검색어
+
+검색 결과를 클릭해서 카드로 추가할 때(타이핑 중간값은 제외) Upstash Redis에 집계해서,
+국내지수/해외지수 탭 검색창 아래에 순위 칩으로 보여줘요. 클릭하면 바로 카드로 추가돼요.
+
+- `POST /api/track-search` `{ market, symbol }` — 집계
+- `GET /api/popular-searches?market=domestic&limit=10` — 상위 N개 조회
+- `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` 환경변수가 없으면 이 기능만 조용히 꺼져요
+  (다른 기능엔 영향 없음).
 
 ## 2단계 — PWA로 배포하기
 

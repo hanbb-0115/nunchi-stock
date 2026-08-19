@@ -323,6 +323,7 @@ app.get('/api/quote', async (req, res) => {
 // 상장/폐지 반영을 위해 서버 시작 시 + 24시간마다 새로 받는다.
 const MST_BASE = 'https://new.real.download.dws.co.kr/common/master';
 let SEARCH_INDEX = { domestic: [], overseas: [] };
+let SEARCH_BY_SYMBOL = { domestic: new Map(), overseas: new Map() }; // 인기 검색어 이름 조회용
 let searchIndexReady = false;
 
 async function downloadMst(filename) {
@@ -397,6 +398,10 @@ async function loadSearchIndex() {
     ];
 
     SEARCH_INDEX = { domestic, overseas };
+    SEARCH_BY_SYMBOL = {
+      domestic: new Map(domestic.map((it) => [it.symbol, it])),
+      overseas: new Map(overseas.map((it) => [it.symbol, it])),
+    };
     searchIndexReady = true;
     console.log(`검색 인덱스 로드 완료: 국내 ${domestic.length}종목, 해외 ${overseas.length}종목`);
   } catch (err) {
@@ -433,6 +438,71 @@ app.get('/api/search', (req, res) => {
     }
   }
   res.json(results);
+});
+
+// ---------- 6) 인기 검색어 (Upstash Redis) ----------
+// 검색창에 타이핑할 때마다가 아니라, 검색 결과를 실제로 클릭해서 카드로 추가할 때만
+// 집계한다 (타이핑 중간값까지 세면 부분 문자열이 순위를 오염시킴).
+// Render 무료 티어는 재배포/슬립 때 디스크가 초기화될 수 있어서, 외부 Redis(Upstash)에
+// 저장해 안정적으로 누적되게 함.
+const { UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN } = process.env;
+
+async function redis(...command) {
+  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
+    throw new Error('UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN이 설정되지 않았어요.');
+  }
+  const res = await fetch(UPSTASH_REDIS_REST_URL, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(command),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(`Upstash 오류: ${json.error}`);
+  return json.result;
+}
+
+app.post('/api/track-search', express.json(), async (req, res) => {
+  const { market, symbol } = req.body || {};
+  if (market !== 'domestic' && market !== 'overseas') {
+    return res.status(400).json({ error: "market은 'domestic' 또는 'overseas'여야 해요" });
+  }
+  if (!symbol) return res.status(400).json({ error: 'symbol이 필요해요' });
+
+  try {
+    await redis('ZINCRBY', `popular:${market}`, '1', symbol);
+    res.json({ ok: true });
+  } catch (err) {
+    // 인기 검색어 집계는 부가 기능이라, 실패해도 검색/카드 추가 자체는 막지 않음
+    res.status(500).json({ error: 'track failed', detail: String(err) });
+  }
+});
+
+app.get('/api/popular-searches', async (req, res) => {
+  const market = req.query.market === 'overseas' ? 'overseas' : 'domestic';
+  const limit = Math.min(Number(req.query.limit) || 10, 30);
+
+  try {
+    const flat = await redis('ZREVRANGE', `popular:${market}`, '0', String(limit - 1), 'WITHSCORES');
+    const items = [];
+    for (let i = 0; i < flat.length; i += 2) {
+      const symbol = flat[i];
+      const count = Number(flat[i + 1]);
+      const info = SEARCH_BY_SYMBOL[market].get(symbol);
+      items.push({
+        symbol,
+        name: info ? info.name : symbol,
+        label: info ? info.label : '',
+        excd: info ? info.excd : undefined,
+        count,
+      });
+    }
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: 'popular searches fetch failed', detail: String(err) });
+  }
 });
 
 app.listen(PORT, () => console.log(`KIS 프록시 서버 실행 중 (${KIS_ENV}) :${PORT}`));

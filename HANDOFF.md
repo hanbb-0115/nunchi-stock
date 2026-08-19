@@ -50,6 +50,14 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
 - **가격 단위 표시** — 국내는 "원", 해외는 "달러"를 가격 끝에 작은 회색 글씨로 표시.
 - **GA4(Google Analytics) 연동** — 측정 ID `G-LG2FL8KJ6B`. 탭 전환/검색/관심종목 추가·삭제/
   위장모드 전환(보스키 포함)/PWA 설치에 커스텀 이벤트 추적. analytics.google.com에서 확인.
+- **KIS 접근토큰 파일 캐싱** — 재발급될 때마다 KIS가 카카오 알림톡을 보내는데, 서버 재시작마다
+  토큰을 새로 받아서 재시작할 때마다 알림이 오던 문제를 `server-example/.token-cache.json`
+  (gitignore됨)에 토큰을 저장해뒀다가 아직 유효하면 재사용하도록 고쳐서 해결.
+- **인기 검색어 기능** — 검색 결과를 클릭해서 카드로 추가할 때(타이핑 중간값은 제외) Upstash
+  Redis(REST API, `server.js`의 `redis()` 헬퍼)에 `ZINCRBY`로 집계. 국내지수/해외지수 탭
+  검색창 아래에 "인기 검색어" 칩으로 표시(`app.js`의 `renderPopularSearches`), 클릭하면 바로
+  카드 추가됨. 엔드포인트: `POST /api/track-search`, `GET /api/popular-searches?market=`.
+  `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` 환경변수 필요 (무료 Upstash 계정).
 
 ### 안 되는 것 / 아직 안 한 것
 - 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고) — 유일하게 남은 큰 작업.
@@ -75,6 +83,8 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
    KIS_APP_SECRET=(Render 대시보드에서 확인)
    KIS_ENV=real
    PORT=3001
+   UPSTASH_REDIS_REST_URL=(Render 대시보드 또는 upstash.com 콘솔에서 확인)
+   UPSTASH_REDIS_REST_TOKEN=(Render 대시보드 또는 upstash.com 콘솔에서 확인)
    ```
    로컬 테스트 없이 배포본(Vercel+Render)만 확인할 거면 이 단계는 건너뛰어도 됨.
 4. **GA4 대시보드 접근** — analytics.google.com은 사용자 구글 계정 로그인만 하면 PC 상관없이

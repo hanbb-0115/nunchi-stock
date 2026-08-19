@@ -585,6 +585,7 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
           label: row.dataset.label,
         });
         track('card_add', { market: row.dataset.market });
+        MarketData.trackSearch(row.dataset.market, row.dataset.symbol);
         resultsEl.hidden = true;
         inputEl.value = '';
       });
@@ -647,6 +648,38 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
   });
 }
 
+// ---------- 인기 검색어 ----------
+async function renderPopularSearches(containerId, market, onAdd) {
+  const container = document.getElementById(containerId);
+  const items = await MarketData.getPopularSearches(market);
+  if (!items || items.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = items
+    .map(
+      (it, i) => `
+        <button class="popular-chip" data-symbol="${it.symbol}" data-name="${it.name}" data-excd="${it.excd || ''}" data-label="${it.label || ''}">
+          <span class="popular-rank">${i + 1}</span>${it.name}
+        </button>
+      `
+    )
+    .join('');
+  container.querySelectorAll('.popular-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      onAdd({
+        symbol: btn.dataset.symbol,
+        name: btn.dataset.name,
+        market,
+        excd: btn.dataset.excd || undefined,
+        label: btn.dataset.label,
+      });
+      track('card_add', { market, source: 'popular' });
+      MarketData.trackSearch(market, btn.dataset.symbol);
+    });
+  });
+}
+
 setupSearch({
   formEl: document.getElementById('domesticSearchForm'),
   inputEl: document.getElementById('domesticSearchInput'),
@@ -694,6 +727,8 @@ document.getElementById('refreshBtn').addEventListener('click', async (e) => {
 loadDomestic();
 loadGlobal();
 renderWatchlist();
+renderPopularSearches('domesticPopular', 'domestic', addDomesticCard);
+renderPopularSearches('globalPopular', 'overseas', addGlobalCard);
 
 // ---------- 서비스워커 등록 (PWA 설치 지원) ----------
 if ('serviceWorker' in navigator) {

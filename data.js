@@ -130,6 +130,27 @@ const MarketData = {
     if (!res.ok) throw new Error(`${name} 시세를 불러오지 못했어요`);
     return await res.json();
   },
+
+  // 검색 결과를 클릭해서 카드로 추가할 때만 호출 — 실패해도 조용히 무시(부가 기능)
+  trackSearch(market, symbol) {
+    if (USE_MOCK) return;
+    fetch(`${PROXY_BASE_URL}/api/track-search`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ market, symbol }),
+    }).catch(() => {});
+  },
+
+  async getPopularSearches(market) {
+    if (USE_MOCK) return [];
+    try {
+      const res = await fetch(`${PROXY_BASE_URL}/api/popular-searches?market=${market}`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch (err) {
+      return [];
+    }
+  },
 };
 
 function delay(value, ms = 350) {
