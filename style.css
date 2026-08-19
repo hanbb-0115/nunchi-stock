@@ -285,23 +285,6 @@ body.no-select{user-select:none;}
 .sr-change.flat{color:var(--text-dim);}
 .sr-quote-empty{color:var(--text-faint); font-size:12px; font-family:inherit;}
 
-.popular-chips{
-  display:flex; flex-wrap:wrap; gap:6px;
-  margin:-4px 0 14px;
-}
-.popular-chips:empty{margin:0;}
-.popular-chip{
-  display:inline-flex; align-items:center; gap:5px;
-  background:var(--bg-elev); border:1px solid var(--line);
-  color:var(--text-dim); border-radius:999px;
-  padding:5px 11px 5px 8px; font-size:12px; font-weight:600;
-  cursor:pointer;
-}
-.popular-chip:active{background:var(--bg-elev-2); transform:scale(0.96);}
-.popular-rank{
-  color:var(--accent); font-family:var(--mono); font-weight:800; font-size:11px;
-}
-
 .empty-state{
   text-align:center; color:var(--text-faint); font-size:13px;
   padding:36px 20px; display:none;
