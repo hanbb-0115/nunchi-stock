@@ -51,17 +51,45 @@ body{
 
 /* Topbar */
 .topbar{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center; gap:12px;
   padding:18px 18px 10px;
 }
-.brand{display:flex; align-items:center; gap:8px;}
+.brand{display:flex; align-items:center; gap:8px; flex-shrink:0;}
 .brand-dot{
   width:9px; height:9px; border-radius:50%;
   background:var(--accent);
   box-shadow:0 0 8px var(--accent);
 }
 .brand-name{font-size:17px; font-weight:700; letter-spacing:-0.01em;}
-.topbar-actions{display:flex; align-items:center; gap:8px;}
+.topbar-actions{display:flex; align-items:center; gap:8px; margin-left:auto; flex-shrink:0;}
+
+/* 인기 검색 티커 (타이틀바, 토스증권 스타일 세로 슬라이딩) */
+.popular-ticker{
+  display:flex; align-items:center;
+  flex:1 1 auto; min-width:0;
+  background:var(--bg-elev); border:1px solid var(--line);
+  border-radius:999px; padding:6px 12px;
+  cursor:pointer;
+}
+.popular-ticker[hidden]{display:none;}
+.popular-ticker:active{background:var(--bg-elev-2);}
+.ticker-viewport{
+  position:relative; height:16px; width:100%; overflow:hidden;
+}
+.ticker-slide{
+  position:absolute; inset:0;
+  display:flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:600; color:var(--text-dim);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  transform:translateY(0); opacity:1;
+  transition:transform 320ms ease, opacity 320ms ease;
+}
+.ticker-slide.out{transform:translateY(-100%); opacity:0;}
+.ticker-slide.enter{transition:none; transform:translateY(100%); opacity:0;}
+.ticker-slide .ticker-rank{
+  flex-shrink:0; color:var(--accent); font-family:var(--mono); font-weight:800; font-size:11px;
+}
+.ticker-slide .ticker-name{overflow:hidden; text-overflow:ellipsis;}
 .icon-btn{
   background:var(--bg-elev); border:1px solid var(--line);
   color:var(--text-dim); border-radius:10px;

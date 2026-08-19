@@ -680,6 +680,70 @@ async function renderPopularSearches(containerId, market, onAdd) {
   });
 }
 
+// ---------- 인기 검색 티커 (타이틀바, 세로 슬라이딩) ----------
+const TICKER_INTERVAL_MS = 3000;
+const TICKER_SLIDE_MS = 320;
+let tickerItems = [];
+let tickerIndex = 0;
+let tickerTimer = null;
+
+async function loadPopularTicker() {
+  const [domestic, overseas] = await Promise.all([
+    MarketData.getPopularSearches('domestic'),
+    MarketData.getPopularSearches('overseas'),
+  ]);
+  tickerItems = [...domestic.map((it) => ({ ...it, market: 'domestic' })), ...overseas.map((it) => ({ ...it, market: 'overseas' }))]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+  tickerIndex = 0;
+
+  clearInterval(tickerTimer);
+  const wrap = document.getElementById('popularTicker');
+  if (tickerItems.length === 0) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+  paintTickerSlide();
+  if (tickerItems.length > 1) {
+    tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+  }
+}
+
+function paintTickerSlide() {
+  const slide = document.getElementById('tickerSlide');
+  const item = tickerItems[tickerIndex];
+  slide.innerHTML = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${item.name}</span>`;
+}
+
+function advanceTicker() {
+  const slide = document.getElementById('tickerSlide');
+  slide.classList.add('out'); // 위로 슬라이드 아웃
+  setTimeout(() => {
+    tickerIndex = (tickerIndex + 1) % tickerItems.length;
+    slide.classList.add('enter'); // 트랜지션 끄고 아래쪽 대기 위치로 순간이동
+    paintTickerSlide();
+    void slide.offsetWidth; // 강제 리플로우 — 순간이동을 실제로 반영시킨 뒤
+    slide.classList.remove('out', 'enter'); // 트랜지션 다시 켜고 제자리로 슬라이드 인
+  }, TICKER_SLIDE_MS);
+}
+
+document.getElementById('popularTicker').addEventListener('click', () => {
+  const item = tickerItems[tickerIndex];
+  if (!item) return;
+  document.querySelector(`.tab[data-tab="${item.market === 'domestic' ? 'domestic' : 'global'}"]`)?.click();
+  if (item.market === 'domestic') addDomesticCard(item);
+  else addGlobalCard(item);
+  track('card_add', { market: item.market, source: 'ticker' });
+  MarketData.trackSearch(item.market, item.symbol);
+});
+document.getElementById('popularTicker').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    document.getElementById('popularTicker').click();
+  }
+});
+
 setupSearch({
   formEl: document.getElementById('domesticSearchForm'),
   inputEl: document.getElementById('domesticSearchInput'),
@@ -729,6 +793,7 @@ loadGlobal();
 renderWatchlist();
 renderPopularSearches('domesticPopular', 'domestic', addDomesticCard);
 renderPopularSearches('globalPopular', 'overseas', addGlobalCard);
+loadPopularTicker();
 
 // ---------- 서비스워커 등록 (PWA 설치 지원) ----------
 if ('serviceWorker' in navigator) {
