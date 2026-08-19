@@ -795,7 +795,17 @@ TICKER_INSTANCES.forEach(({ wrapEl, tickerEl, panelEl }) => {
     if (tickerItems.length === 0) return;
     clearInterval(tickerTimer);
     renderTickerPanel(panelEl);
+    panelEl.style.left = '0';
     panelEl.hidden = false;
+    // 위장 모드는 제목(파일명)이 길어서 티커가 오른쪽으로 많이 밀려있을 수 있음 —
+    // 패널을 항상 티커 왼쪽 끝(left:0)에서 펼치면 화면 오른쪽 밖으로 넘어갈 수 있어서,
+    // 실제로 넘치는 만큼 왼쪽으로 당겨서 화면 안에 들어오게 보정함
+    const rect = panelEl.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth; // window.innerWidth는 환경에 따라 부정확할 수 있어서 이걸 씀
+    const overflowRight = rect.right - (viewportWidth - 8);
+    if (overflowRight > 0) {
+      panelEl.style.left = `${-overflowRight}px`;
+    }
   });
   wrapEl.addEventListener('mouseleave', () => {
     panelEl.hidden = true;
