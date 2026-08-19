@@ -534,8 +534,45 @@ function debounce(fn, wait) {
   };
 }
 
+const SEARCH_QUOTE_PREVIEW_LIMIT = 8; // 미리보기 시세는 상위 N개까지만 (API 호출량 제어)
+
 function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
   let requestId = 0;
+
+  // mode: 'loading'(불러오는 중) | 'unfetched'(미리보기 범위 밖이라 시세 조회 안 함) | 'ready'(시세 있음)
+  function rowHtml(r, mode) {
+    const quoteHtml =
+      mode === 'loading'
+        ? `<span class="sr-quote sr-quote-empty">···</span>`
+        : mode === 'unfetched' || r.failed
+        ? `<span class="sr-quote sr-quote-empty">-</span>`
+        : `<span class="sr-quote">
+          <span class="sr-price">${formatPrice(r.price)}</span>
+          <span class="sr-change ${changeClass(r.change)}">${changeSign(r.change)}${formatPrice(r.change)} (${changeSign(r.changePct)}${r.changePct.toFixed(2)}%)</span>
+        </span>`;
+    return `
+      <div class="search-result-row" data-symbol="${r.symbol}" data-name="${r.name}" data-market="${r.market}" data-excd="${r.excd || ''}" data-label="${r.label}">
+        <span class="sr-info"><span class="sr-name">${r.name}</span><span class="sr-code">${r.symbol} · ${r.label}</span></span>
+        ${quoteHtml}
+      </div>
+    `;
+  }
+
+  function bindRowClicks() {
+    resultsEl.querySelectorAll('.search-result-row[data-symbol]').forEach((row) => {
+      row.addEventListener('click', () => {
+        onAdd({
+          symbol: row.dataset.symbol,
+          name: row.dataset.name,
+          market: row.dataset.market,
+          excd: row.dataset.excd || undefined,
+          label: row.dataset.label,
+        });
+        resultsEl.hidden = true;
+        inputEl.value = '';
+      });
+    });
+  }
 
   async function runSearch(q) {
     const myRequestId = ++requestId; // 검색어가 비어도 증가시켜서, 이전에 날아간 요청을 무효화함
@@ -554,31 +591,28 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
       return;
     }
 
-    resultsEl.innerHTML = results
-      .map(
-        (r) => `
-        <div class="search-result-row" data-symbol="${r.symbol}" data-name="${r.name}" data-market="${r.market}" data-excd="${r.excd || ''}" data-label="${r.label}">
-          <span><span class="sr-name">${r.name}</span><span class="sr-code">${r.symbol} · ${r.label}</span></span>
-          <span class="sr-add">+ 추가</span>
-        </div>
-      `
-      )
-      .join('');
-    resultsEl.hidden = false;
+    const preview = results.slice(0, SEARCH_QUOTE_PREVIEW_LIMIT);
+    const rest = results.slice(SEARCH_QUOTE_PREVIEW_LIMIT);
 
-    resultsEl.querySelectorAll('.search-result-row[data-symbol]').forEach((row) => {
-      row.addEventListener('click', () => {
-        onAdd({
-          symbol: row.dataset.symbol,
-          name: row.dataset.name,
-          market: row.dataset.market,
-          excd: row.dataset.excd || undefined,
-          label: row.dataset.label,
-        });
-        resultsEl.hidden = true;
-        inputEl.value = '';
-      });
-    });
+    // 1단계: 이름부터 바로 보여주고("···" 로딩 표시), 시세는 뒤이어 채워넣음
+    resultsEl.innerHTML =
+      preview.map((r) => rowHtml(r, 'loading')).join('') +
+      rest.map((r) => rowHtml(r, 'unfetched')).join('');
+    resultsEl.hidden = false;
+    bindRowClicks();
+
+    const quotes = await Promise.all(
+      preview.map((r) =>
+        MarketData.getQuote(r.symbol, r.name, r.market, r.excd).catch(() => ({ ...r, failed: true }))
+      )
+    );
+    if (myRequestId !== requestId) return; // 그 사이 검색어가 또 바뀌었으면 폐기
+
+    // 2단계: 미리보기 대상 행만 시세로 교체
+    resultsEl.innerHTML =
+      preview.map((r, i) => rowHtml({ ...r, ...quotes[i] }, 'ready')).join('') +
+      rest.map((r) => rowHtml(r, 'unfetched')).join('');
+    bindRowClicks();
   }
 
   const debouncedSearch = debounce((q) => runSearch(q), 250);
