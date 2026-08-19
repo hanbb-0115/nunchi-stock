@@ -107,12 +107,12 @@ body{
 .titlebar-ticker .ticker-slide{color:rgba(255,255,255,0.92); font-size:12px;}
 .titlebar-ticker .ticker-slide .ticker-rank{color:#fff;}
 
-/* 티커 호버 시 펼쳐지는 1~10위 전체 목록 — 티커 알약 자체는 좁아도(129px 안팎)
-   패널은 이름+가격이 다 보이게 고정 최소폭으로 오른쪽 정렬 펼침 (left:0을 쓰면
-   부모 폭에 눌려서 패널까지 같이 좁아짐) */
+/* 티커 호버 시 펼쳐지는 1~10위 전체 목록 — 티커 알약 왼쪽 끝에 맞춰서 바로 밑에
+   열리게 함(항상 같은 기준점이라 기본 화면/위장 모드 어디서든 위치가 일관됨).
+   폭은 티커 알약 자체(129px 안팎)보다 넓게 고정해서 이름+가격이 안 눌리게 함 */
 .ticker-panel{
   position:absolute; z-index:40;
-  top:calc(100% + 8px); right:0; left:auto;
+  top:calc(100% + 8px); left:0;
   min-width:260px; max-width:min(320px, calc(100vw - 32px));
   background:var(--bg-elev); border:1px solid var(--line); border-radius:14px;
   box-shadow:0 8px 24px rgba(0,0,0,0.3);
