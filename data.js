@@ -82,19 +82,37 @@ function mockQuoteFor(symbol, name, market) {
   };
 }
 
+// 카드 추가/즐겨찾기 등으로 화면을 다시 그릴 때마다 이미 방금 받아온 시세까지
+// 매번 서버에 다시 요청하던 걸 막기 위한 짧은 클라이언트 캐시 (서버도 15초 캐시가
+// 있지만, 그래도 매번 왕복하면 체감 속도가 느림 — 여기서 아예 요청 자체를 건너뜀)
+const CLIENT_CACHE_TTL_MS = 8000;
+const clientCache = new Map(); // key -> { data, expiresAt }
+
+async function withClientCache(key, fetcher) {
+  const cached = clientCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+  const data = await fetcher();
+  clientCache.set(key, { data, expiresAt: Date.now() + CLIENT_CACHE_TTL_MS });
+  return data;
+}
+
 const MarketData = {
   async getDomesticIndices() {
     if (USE_MOCK) return delay(MOCK_DOMESTIC);
-    const res = await fetch(`${PROXY_BASE_URL}/api/domestic-indices`);
-    if (!res.ok) throw new Error('국내 지수를 불러오지 못했어요');
-    return await res.json();
+    return withClientCache('domestic-indices', async () => {
+      const res = await fetch(`${PROXY_BASE_URL}/api/domestic-indices`);
+      if (!res.ok) throw new Error('국내 지수를 불러오지 못했어요');
+      return await res.json();
+    });
   },
 
   async getGlobalIndices() {
     if (USE_MOCK) return delay(MOCK_GLOBAL);
-    const res = await fetch(`${PROXY_BASE_URL}/api/global-indices`);
-    if (!res.ok) throw new Error('해외 지수를 불러오지 못했어요');
-    return await res.json();
+    return withClientCache('global-indices', async () => {
+      const res = await fetch(`${PROXY_BASE_URL}/api/global-indices`);
+      if (!res.ok) throw new Error('해외 지수를 불러오지 못했어요');
+      return await res.json();
+    });
   },
 
   async searchSymbol(query, marketFilter) {
@@ -124,11 +142,13 @@ const MarketData = {
 
   async getQuote(symbol, name, market, excd) {
     if (USE_MOCK) return delay(mockQuoteFor(symbol, name, market));
-    const params = new URLSearchParams({ symbol, name, market });
-    if (excd) params.set('excd', excd);
-    const res = await fetch(`${PROXY_BASE_URL}/api/quote?${params.toString()}`);
-    if (!res.ok) throw new Error(`${name} 시세를 불러오지 못했어요`);
-    return await res.json();
+    return withClientCache(`quote:${market}:${symbol}:${excd || ''}`, async () => {
+      const params = new URLSearchParams({ symbol, name, market });
+      if (excd) params.set('excd', excd);
+      const res = await fetch(`${PROXY_BASE_URL}/api/quote?${params.toString()}`);
+      if (!res.ok) throw new Error(`${name} 시세를 불러오지 못했어요`);
+      return await res.json();
+    });
   },
 
   // 검색 결과를 클릭해서 카드로 추가할 때만 호출 — 실패해도 조용히 무시(부가 기능)
@@ -150,6 +170,11 @@ const MarketData = {
     } catch (err) {
       return [];
     }
+  },
+
+  // 새로고침 버튼처럼 "진짜 최신값"이 필요할 때 캐시를 건너뛰기 위해 비움
+  clearCache() {
+    clientCache.clear();
   },
 };
 

@@ -260,9 +260,11 @@ function isInWatchlist(symbol) {
 
 function toggleStar(btn) {
   const symbol = btn.dataset.symbol;
+  let nowStarred;
   if (isInWatchlist(symbol)) {
-    removeFromWatchlist(symbol);
+    removeFromWatchlist(symbol); // 관심종목 탭 리스트는 이 안에서 알아서 다시 그려짐
     track('watchlist_remove', { market: btn.dataset.market });
+    nowStarred = false;
   } else {
     addToWatchlist({
       symbol,
@@ -272,9 +274,15 @@ function toggleStar(btn) {
       label: btn.dataset.label,
     });
     track('watchlist_add', { market: btn.dataset.market });
+    nowStarred = true;
   }
-  loadDomestic();
-  loadGlobal();
+  // 시세가 바뀐 게 아니라 관심종목 여부만 바뀐 거라, 국내/해외 리스트 전체를 다시 불러올
+  // 필요 없음 — 같은 종목이 보이는 별 아이콘만 즉시 갱신 (네트워크 요청 없이 즉각 반영)
+  document.querySelectorAll(`.card-star[data-symbol="${symbol}"]`).forEach((b) => {
+    b.classList.toggle('starred', nowStarred);
+    b.textContent = nowStarred ? '★' : '☆';
+    b.setAttribute('aria-label', nowStarred ? '관심종목 삭제' : '관심종목 추가');
+  });
 }
 
 function showStatus(message) {
@@ -786,6 +794,7 @@ enableDragReorder(document.getElementById('watchList'), getWatchlist, (items) =>
 // ---------- 새로고침 ----------
 document.getElementById('refreshBtn').addEventListener('click', async (e) => {
   e.currentTarget.classList.add('spin');
+  MarketData.clearCache();
   await Promise.all([loadDomestic(), loadGlobal(), renderWatchlist()]);
   setTimeout(() => e.currentTarget.classList.remove('spin'), 700);
 });
