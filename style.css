@@ -213,10 +213,11 @@ body{
 .card-star.starred{color:#ffc94d;}
 .card-star:active{transform:scale(0.88);}
 body.no-select{user-select:none;}
-.idx-info{display:flex; flex-direction:column; gap:3px; width:64px; flex-shrink:0; overflow:hidden;}
+.idx-info{display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-width:0; overflow:hidden;}
 .idx-name{font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .idx-sub{font-size:11px; color:var(--text-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.idx-spark{flex:1; display:flex; justify-content:center; padding:0 6px; min-width:0;}
+.idx-spark{flex:0 0 auto; display:flex; justify-content:center; padding:0 6px; min-width:0;}
+.idx-spark:empty{padding:0;}
 .idx-spark svg{display:block; width:100%; max-width:76px; height:28px;}
 .spark-line{stroke-width:1.6px; vector-effect:non-scaling-stroke;}
 .spark-line.up{stroke:var(--up);}
