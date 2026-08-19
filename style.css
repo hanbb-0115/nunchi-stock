@@ -125,6 +125,15 @@ body{
 .icon-btn.spin svg{animation:spin 0.7s linear;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+/* 기본 화면의 위장 테마 버튼 — 아이콘만으로는 눌러야 하는지 알기 어려워서
+   글자(위장) + 드롭다운 화살표를 붙여 메뉴라는 걸 바로 알 수 있게 함 */
+.skin-menu-btn{
+  width:auto; padding:0 10px 0 9px; gap:5px;
+  font-size:12px; font-weight:700; color:var(--text-dim); white-space:nowrap;
+}
+.skin-menu-btn.skin-active{color:var(--accent);}
+.skin-menu-caret{flex-shrink:0; opacity:0.7;}
+
 /* 위장 테마 선택 메뉴 — 어느 트리거에서 열든 JS가 위치를 계산해서 배치 */
 .icon-btn.skin-active{border-color:var(--accent); color:var(--accent);}
 .skin-dropdown{
@@ -333,6 +342,16 @@ body.no-select{user-select:none;}
   display:flex; align-items:center; gap:8px;
   padding:5px 12px; font-size:12px;
 }
+/* 위장 모드 안(엑셀/워드/PPT)의 로고 버튼 — 진짜 앱처럼 보여야 해서 대놓고
+   "메뉴 버튼"처럼 만들 순 없지만, 눌러서 테마를 바꿀 수 있다는 걸 알아챌 수
+   있게 코너에 아주 작은 점 힌트만 둠 (위장은 유지하면서 발견 가능하게) */
+.xl-logo, .wd-logo, .pp-logo{position:relative;}
+.xl-logo::after, .wd-logo::after, .pp-logo::after{
+  content:''; position:absolute; right:-3px; bottom:-3px;
+  width:7px; height:7px; border-radius:50%;
+  background:var(--accent); border:1.5px solid var(--bg-elev);
+}
+
 .xl-logo{
   width:16px; height:16px; border-radius:3px; background:#fff;
   color:var(--accent); font-weight:800; font-size:11px;
