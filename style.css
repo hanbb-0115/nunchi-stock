@@ -388,3 +388,247 @@ body.no-select{user-select:none;}
 /* 검색 미리보기(실시간 시세)도 각진 셀 톤으로 */
 [data-skin="excel"] .search-result-row{border-bottom:1px solid var(--line);}
 [data-skin="excel"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+
+/* ============================================================
+   위장 모드 — 워드
+   ============================================================ */
+.wd-chrome, .wd-statusbar{display:none;}
+
+:root[data-skin="word"]{
+  --bg:#e8e9eb;
+  --bg-elev:#ffffff;
+  --bg-elev-2:#f3f2f1;
+  --line:#d4d4d4;
+  --text:#1b1b1b;
+  --text-dim:#484644;
+  --text-faint:#7a7a7a;
+  --up:#c1272d;
+  --up-bg:transparent;
+  --down:#1461c7;
+  --down-bg:transparent;
+  --accent:#2b579a;   /* 워드 블루 */
+  --radius:0px;
+  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
+}
+
+[data-skin="word"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
+[data-skin="word"] .app{max-width:640px;}
+
+[data-skin="word"] .topbar{display:none;}
+[data-skin="word"] .status-bar{margin-top:0;}
+
+[data-skin="word"] .wd-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+
+.wd-titlebar{
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; gap:8px;
+  padding:5px 12px; font-size:12px;
+}
+.wd-logo{
+  width:16px; height:16px; border-radius:3px; background:#fff;
+  color:var(--accent); font-weight:800; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+  border:none; cursor:pointer; padding:0;
+}
+.wd-logo:active{transform:scale(0.9);}
+.wd-filename{opacity:0.95;}
+
+.wd-ribbon-tabs{
+  display:flex; gap:14px; padding:6px 12px 0;
+  font-size:12.5px; color:var(--text-dim);
+  border-bottom:1px solid var(--line);
+  overflow-x:auto; white-space:nowrap;
+  scrollbar-width:none;
+}
+.wd-ribbon-tabs::-webkit-scrollbar{display:none;}
+.wd-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
+.wd-ribbon-tabs span.active{
+  color:var(--accent); font-weight:700;
+  border-bottom:2px solid var(--accent);
+}
+
+.wd-ribbon-icons{
+  display:flex; gap:14px; padding:8px 12px;
+  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
+  overflow-x:auto; scrollbar-width:none;
+}
+.wd-ribbon-icons::-webkit-scrollbar{display:none;}
+.wd-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
+.wd-icon-group:last-child{border-right:none;}
+.wd-icon-group span{
+  width:16px; height:16px; border-radius:3px;
+  background:#d7d5d3;
+}
+
+/* 자 눈금 — 문서 상단 눈금자 흉내 */
+.wd-ruler{
+  height:14px; background:var(--bg-elev-2); border-bottom:1px solid var(--line);
+  background-image:repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 12px);
+  background-position:14px 0;
+}
+
+/* 본문 = 문서 페이지 — 흰 종이처럼 그림자 얹고 좌우 여백 확보 */
+[data-skin="word"] .panels{
+  padding:18px 22px; background:var(--bg-elev);
+  margin:14px 10px; box-shadow:0 0 0 1px var(--line), 0 4px 14px rgba(0,0,0,0.12);
+}
+[data-skin="word"] .search-row input{border-radius:0;}
+[data-skin="word"] .btn-primary{border-radius:0; background:var(--accent);}
+[data-skin="word"] .search-results{border-radius:0;}
+
+/* 카드 목록 = 문서에 삽입된 표(테이블)처럼 */
+[data-skin="word"] .card-grid{gap:0; border:1px solid var(--line);}
+[data-skin="word"] .idx-card{
+  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
+  border-radius:0; padding:10px 12px;
+}
+[data-skin="word"] .idx-card:last-child{border-bottom:none;}
+[data-skin="word"] .idx-card:nth-child(odd){background:var(--bg-elev-2);}
+[data-skin="word"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
+[data-skin="word"] .idx-name{font-weight:600; font-size:13px;}
+[data-skin="word"] .idx-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+[data-skin="word"] .idx-spark{display:none;}
+
+/* 탭 = 문서 안 섹션 제목처럼 단순화 */
+[data-skin="word"] .tabs{
+  margin:0 0 10px; padding:0; gap:0; background:transparent; border-radius:0;
+  border-bottom:2px solid var(--accent);
+}
+[data-skin="word"] .tab{
+  border-radius:0; background:transparent; color:var(--text-faint);
+  font-size:15px; font-weight:700; padding:4px 0 8px; margin-right:18px; flex:none;
+}
+[data-skin="word"] .tab.active{color:var(--accent);}
+[data-skin="word"] .foot{display:none;}
+
+[data-skin="word"] .wd-statusbar{
+  display:flex; justify-content:space-between;
+  padding:4px 12px; font-size:11px; color:#fff;
+  background:var(--accent);
+}
+
+/* 검색 미리보기도 표 톤으로 */
+[data-skin="word"] .search-result-row{border-bottom:1px solid var(--line);}
+[data-skin="word"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+
+/* ============================================================
+   위장 모드 — 파워포인트
+   ============================================================ */
+.pp-chrome, .pp-statusbar{display:none;}
+
+:root[data-skin="ppt"]{
+  --bg:#d6d6d6;
+  --bg-elev:#ffffff;
+  --bg-elev-2:#eeeeee;
+  --line:#c7c7c7;
+  --text:#1b1b1b;
+  --text-dim:#484644;
+  --text-faint:#7a7a7a;
+  --up:#c1272d;
+  --up-bg:transparent;
+  --down:#1461c7;
+  --down-bg:transparent;
+  --accent:#b7472a;   /* 파워포인트 오렌지 */
+  --radius:0px;
+  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
+}
+
+[data-skin="ppt"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
+[data-skin="ppt"] .app{max-width:640px;}
+
+[data-skin="ppt"] .topbar{display:none;}
+[data-skin="ppt"] .status-bar{margin-top:0;}
+
+[data-skin="ppt"] .pp-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+
+.pp-titlebar{
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; gap:8px;
+  padding:5px 12px; font-size:12px;
+}
+.pp-logo{
+  width:16px; height:16px; border-radius:3px; background:#fff;
+  color:var(--accent); font-weight:800; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+  border:none; cursor:pointer; padding:0;
+}
+.pp-logo:active{transform:scale(0.9);}
+.pp-filename{opacity:0.95;}
+
+.pp-ribbon-tabs{
+  display:flex; gap:14px; padding:6px 12px 0;
+  font-size:12.5px; color:var(--text-dim);
+  border-bottom:1px solid var(--line);
+  overflow-x:auto; white-space:nowrap;
+  scrollbar-width:none;
+}
+.pp-ribbon-tabs::-webkit-scrollbar{display:none;}
+.pp-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
+.pp-ribbon-tabs span.active{
+  color:var(--accent); font-weight:700;
+  border-bottom:2px solid var(--accent);
+}
+
+.pp-ribbon-icons{
+  display:flex; gap:14px; padding:8px 12px;
+  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
+  overflow-x:auto; scrollbar-width:none;
+}
+.pp-ribbon-icons::-webkit-scrollbar{display:none;}
+.pp-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
+.pp-icon-group:last-child{border-right:none;}
+.pp-icon-group span{
+  width:16px; height:16px; border-radius:3px;
+  background:#d7d5d3;
+}
+
+/* 슬라이드 필름스트립 — 좌측 슬라이드 목록 대신 상단 가로 스트립으로 */
+.pp-filmstrip{
+  display:flex; gap:8px; padding:10px 12px;
+  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
+}
+.pp-thumb{
+  width:34px; height:22px; border-radius:2px;
+  background:var(--bg-elev); border:1px solid var(--line); flex-shrink:0;
+}
+.pp-thumb.active{border-color:var(--accent); border-width:2px;}
+
+/* 탭 = 슬라이드 캔버스 위 보기 전환 링크처럼 단순화 */
+[data-skin="ppt"] .tabs{
+  margin:10px 16px 0; padding:0; gap:0; background:transparent; border-radius:0;
+}
+[data-skin="ppt"] .tab{
+  border-radius:0; background:transparent; color:var(--text-faint);
+  font-size:13px; font-weight:700; padding:4px 0; margin-right:16px; flex:none;
+}
+[data-skin="ppt"] .tab.active{color:var(--accent); border-bottom:2px solid var(--accent);}
+
+/* 본문 = 슬라이드 캔버스 — 회색 작업영역 위에 흰 슬라이드 한 장 */
+[data-skin="ppt"] .panels{padding:10px 16px 16px;}
+[data-skin="ppt"] .panel.active{
+  background:var(--bg-elev);
+  box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
+  padding:16px;
+}
+[data-skin="ppt"] .search-row input{border-radius:0;}
+[data-skin="ppt"] .btn-primary{border-radius:0; background:var(--accent);}
+[data-skin="ppt"] .search-results{border-radius:0;}
+
+[data-skin="ppt"] .card-grid{gap:8px;}
+[data-skin="ppt"] .idx-card{
+  background:var(--bg-elev-2); border:1px solid var(--line);
+  border-radius:0; padding:10px 12px;
+}
+[data-skin="ppt"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
+[data-skin="ppt"] .idx-name{font-weight:700; font-size:14px;}
+[data-skin="ppt"] .idx-spark{display:none;}
+[data-skin="ppt"] .foot{display:none;}
+
+[data-skin="ppt"] .pp-statusbar{
+  display:flex; justify-content:space-between;
+  padding:4px 12px; font-size:11px; color:#fff;
+  background:var(--accent);
+}
+
+[data-skin="ppt"] .search-result-row{border-bottom:1px solid var(--line);}
+[data-skin="ppt"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}

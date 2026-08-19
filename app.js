@@ -114,14 +114,19 @@ const SKIN_KEY = 'nunchi_skin_v1';
 const SKIN_OPTIONS = [
   { id: 'none', label: '기본 화면' },
   { id: 'excel', label: '엑셀' },
-  { id: 'word', label: '워드', comingSoon: true },
-  { id: 'ppt', label: '파워포인트', comingSoon: true },
+  { id: 'word', label: '워드' },
+  { id: 'ppt', label: '파워포인트' },
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
-// 상단바(기본 화면)의 skinMenuBtn과, 엑셀 위장 화면의 xlLogoBtn 둘 다
-// 같은 드롭다운을 연다 — 어느 쪽이 보이든 항상 테마를 바꿀 수 있게.
-const skinTriggers = [document.getElementById('skinMenuBtn'), document.getElementById('xlLogoBtn')];
+// 상단바(기본 화면)의 skinMenuBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
+// 같은 드롭다운을 연다 — 어느 화면이 보이든 항상 테마를 바꿀 수 있게.
+const skinTriggers = [
+  document.getElementById('skinMenuBtn'),
+  document.getElementById('xlLogoBtn'),
+  document.getElementById('wdLogoBtn'),
+  document.getElementById('ppLogoBtn'),
+];
 const skinDropdown = document.getElementById('skinDropdown');
 let activeSkinTrigger = null;
 
