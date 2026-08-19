@@ -18,6 +18,11 @@ function track(name, params) {
 }
 
 // ---------- 유틸 ----------
+// 종목명 등은 KIS 마스터 데이터에서 오지만, 만에 하나 이상한 값이 섞여도
+// innerHTML에 그대로 꽂히지 않도록 항상 이스케이프해서 씀 (방어적 조치)
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 function formatPrice(n) {
   return n.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
 }
@@ -233,15 +238,15 @@ function renderCard(item) {
       ${
         item.starrable
           ? `<button class="card-star${item.starred ? ' starred' : ''}"
-              data-symbol="${item.symbol}" data-name="${item.name}"
-              data-market="${item.market || ''}" data-excd="${item.excd || ''}" data-label="${item.label || ''}"
+              data-symbol="${escapeHtml(item.symbol)}" data-name="${escapeHtml(item.name)}"
+              data-market="${escapeHtml(item.market || '')}" data-excd="${escapeHtml(item.excd || '')}" data-label="${escapeHtml(item.label || '')}"
               aria-label="관심종목 ${item.starred ? '삭제' : '추가'}">${item.starred ? '★' : '☆'}</button>`
           : ''
       }
-      ${item.removable ? `<button class="card-remove" data-symbol="${item.symbol}" aria-label="삭제">✕</button>` : ''}
+      ${item.removable ? `<button class="card-remove" data-symbol="${escapeHtml(item.symbol)}" aria-label="삭제">✕</button>` : ''}
       <div class="idx-info">
-        <span class="idx-name">${item.name}</span>
-        <span class="idx-sub">${item.sub || ''}${item.failed ? ' · 조회 실패' : ''}</span>
+        <span class="idx-name">${escapeHtml(item.name)}</span>
+        <span class="idx-sub">${escapeHtml(item.sub || '')}${item.failed ? ' · 조회 실패' : ''}</span>
       </div>
       <div class="idx-spark">${sparklineSvg(item.trend, cls)}</div>
       <div class="idx-numbers">
@@ -575,8 +580,8 @@ function setupSearch({ formEl, inputEl, resultsEl, marketFilter, onAdd }) {
           <span class="sr-change ${changeClass(r.change)}">${changeSign(r.change)}${formatPrice(r.change)} (${changeSign(r.changePct)}${r.changePct.toFixed(2)}%)</span>
         </span>`;
     return `
-      <div class="search-result-row" data-symbol="${r.symbol}" data-name="${r.name}" data-market="${r.market}" data-excd="${r.excd || ''}" data-label="${r.label}">
-        <span class="sr-info"><span class="sr-name">${r.name}</span><span class="sr-code">${r.symbol} · ${r.label}</span></span>
+      <div class="search-result-row" data-symbol="${escapeHtml(r.symbol)}" data-name="${escapeHtml(r.name)}" data-market="${escapeHtml(r.market)}" data-excd="${escapeHtml(r.excd || '')}" data-label="${escapeHtml(r.label)}">
+        <span class="sr-info"><span class="sr-name">${escapeHtml(r.name)}</span><span class="sr-code">${escapeHtml(r.symbol)} · ${escapeHtml(r.label)}</span></span>
         ${quoteHtml}
       </div>
     `;
@@ -689,7 +694,7 @@ async function loadPopularTicker() {
 function paintTickerSlide() {
   const slide = document.getElementById('tickerSlide');
   const item = tickerItems[tickerIndex];
-  slide.innerHTML = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${item.name}</span>`;
+  slide.innerHTML = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${escapeHtml(item.name)}</span>`;
 }
 
 function advanceTicker() {
@@ -731,8 +736,8 @@ function renderTickerPanel() {
       (it, i) => `
         <button class="ticker-panel-row" data-index="${i}">
           <span class="tp-rank">${i + 1}</span>
-          <span class="tp-name">${it.name}</span>
-          <span class="tp-label">${it.label || ''}</span>
+          <span class="tp-name">${escapeHtml(it.name)}</span>
+          <span class="tp-label">${escapeHtml(it.label || '')}</span>
         </button>
       `
     )

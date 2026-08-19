@@ -470,6 +470,12 @@ app.post('/api/track-search', express.json(), async (req, res) => {
     return res.status(400).json({ error: "market은 'domestic' 또는 'overseas'여야 해요" });
   }
   if (!symbol) return res.status(400).json({ error: 'symbol이 필요해요' });
+  // 실제 KIS 마스터 데이터에 있는 종목코드만 집계 — 검증 없이 저장하면 임의 문자열이
+  // 그대로 popular-searches 응답의 name으로 돌아가서 클라이언트 innerHTML에 꽂히는
+  // 저장형 XSS로 이어질 수 있었음(예: symbol에 <img onerror=...> 주입).
+  if (!searchIndexReady || !SEARCH_BY_SYMBOL[market].has(symbol)) {
+    return res.status(400).json({ error: '알 수 없는 종목코드예요' });
+  }
 
   try {
     await redis('ZINCRBY', `popular:${market}`, '1', symbol);
