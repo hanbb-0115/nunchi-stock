@@ -668,6 +668,20 @@ let tickerItems = [];
 let tickerIndex = 0;
 let tickerTimer = null;
 
+// 기본 화면 + 엑셀/워드/PPT 위장 모드 제목표시줄, 총 4곳에 같은 티커를 동시에
+// 띄운다 — 어느 화면이 보이든(CSS가 나머지를 숨김) 항상 최신 상태로 맞춰져 있게.
+const TICKER_INSTANCES = [
+  { wrap: 'tickerWrap', ticker: 'popularTicker', slide: 'tickerSlide', panel: 'tickerPanel' },
+  { wrap: 'xlTickerWrap', ticker: 'xlPopularTicker', slide: 'xlTickerSlide', panel: 'xlTickerPanel' },
+  { wrap: 'wdTickerWrap', ticker: 'wdPopularTicker', slide: 'wdTickerSlide', panel: 'wdTickerPanel' },
+  { wrap: 'ppTickerWrap', ticker: 'ppPopularTicker', slide: 'ppTickerSlide', panel: 'ppTickerPanel' },
+].map((ids) => ({
+  wrapEl: document.getElementById(ids.wrap),
+  tickerEl: document.getElementById(ids.ticker),
+  slideEl: document.getElementById(ids.slide),
+  panelEl: document.getElementById(ids.panel),
+}));
+
 async function loadPopularTicker() {
   const [domestic, overseas] = await Promise.all([
     MarketData.getPopularSearches('domestic'),
@@ -679,12 +693,9 @@ async function loadPopularTicker() {
   tickerIndex = 0;
 
   clearInterval(tickerTimer);
-  const wrap = document.getElementById('popularTicker');
-  if (tickerItems.length === 0) {
-    wrap.hidden = true;
-    return;
-  }
-  wrap.hidden = false;
+  const hasItems = tickerItems.length > 0;
+  TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = !hasItems; });
+  if (!hasItems) return;
   paintTickerSlide();
   if (tickerItems.length > 1) {
     tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
@@ -692,20 +703,19 @@ async function loadPopularTicker() {
 }
 
 function paintTickerSlide() {
-  const slide = document.getElementById('tickerSlide');
   const item = tickerItems[tickerIndex];
-  slide.innerHTML = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${escapeHtml(item.name)}</span>`;
+  const html = `<span class="ticker-rank">${tickerIndex + 1}</span><span class="ticker-name">${escapeHtml(item.name)}</span>`;
+  TICKER_INSTANCES.forEach(({ slideEl }) => { slideEl.innerHTML = html; });
 }
 
 function advanceTicker() {
-  const slide = document.getElementById('tickerSlide');
-  slide.classList.add('out'); // 위로 슬라이드 아웃
+  TICKER_INSTANCES.forEach(({ slideEl }) => slideEl.classList.add('out')); // 위로 슬라이드 아웃
   setTimeout(() => {
     tickerIndex = (tickerIndex + 1) % tickerItems.length;
-    slide.classList.add('enter'); // 트랜지션 끄고 아래쪽 대기 위치로 순간이동
+    TICKER_INSTANCES.forEach(({ slideEl }) => slideEl.classList.add('enter')); // 트랜지션 끄고 아래쪽 대기 위치로 순간이동
     paintTickerSlide();
-    void slide.offsetWidth; // 강제 리플로우 — 순간이동을 실제로 반영시킨 뒤
-    slide.classList.remove('out', 'enter'); // 트랜지션 다시 켜고 제자리로 슬라이드 인
+    TICKER_INSTANCES.forEach(({ slideEl }) => void slideEl.offsetWidth); // 강제 리플로우
+    TICKER_INSTANCES.forEach(({ slideEl }) => slideEl.classList.remove('out', 'enter')); // 트랜지션 다시 켜고 제자리로 슬라이드 인
   }, TICKER_SLIDE_MS);
 }
 
@@ -718,20 +728,9 @@ function selectTickerItem(item) {
   MarketData.trackSearch(item.market, item.symbol);
 }
 
-document.getElementById('popularTicker').addEventListener('click', () => {
-  selectTickerItem(tickerItems[tickerIndex]);
-});
-document.getElementById('popularTicker').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    document.getElementById('popularTicker').click();
-  }
-});
-
 // ---------- 티커 호버 시 1~10위 전체 목록 ----------
-function renderTickerPanel() {
-  const panel = document.getElementById('tickerPanel');
-  panel.innerHTML = tickerItems
+function renderTickerPanel(panelEl) {
+  panelEl.innerHTML = tickerItems
     .map(
       (it, i) => `
         <button class="ticker-panel-row" data-index="${i}">
@@ -742,22 +741,29 @@ function renderTickerPanel() {
       `
     )
     .join('');
-  panel.querySelectorAll('.ticker-panel-row').forEach((btn) => {
+  panelEl.querySelectorAll('.ticker-panel-row').forEach((btn) => {
     btn.addEventListener('click', () => selectTickerItem(tickerItems[Number(btn.dataset.index)]));
   });
 }
 
-const tickerWrap = document.getElementById('tickerWrap');
-const tickerPanel = document.getElementById('tickerPanel');
-tickerWrap.addEventListener('mouseenter', () => {
-  if (tickerItems.length === 0) return;
-  clearInterval(tickerTimer);
-  renderTickerPanel();
-  tickerPanel.hidden = false;
-});
-tickerWrap.addEventListener('mouseleave', () => {
-  tickerPanel.hidden = true;
-  if (tickerItems.length > 1) tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+TICKER_INSTANCES.forEach(({ wrapEl, tickerEl, panelEl }) => {
+  tickerEl.addEventListener('click', () => selectTickerItem(tickerItems[tickerIndex]));
+  tickerEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      tickerEl.click();
+    }
+  });
+  wrapEl.addEventListener('mouseenter', () => {
+    if (tickerItems.length === 0) return;
+    clearInterval(tickerTimer);
+    renderTickerPanel(panelEl);
+    panelEl.hidden = false;
+  });
+  wrapEl.addEventListener('mouseleave', () => {
+    panelEl.hidden = true;
+    if (tickerItems.length > 1) tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+  });
 });
 
 setupSearch({

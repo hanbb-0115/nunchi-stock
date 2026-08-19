@@ -92,6 +92,17 @@ body{
 }
 .ticker-slide .ticker-name{overflow:hidden; text-overflow:ellipsis;}
 
+/* 위장 모드(엑셀/워드/PPT) 제목표시줄 안의 티커 — 진짜 그 앱 제목표시줄의
+   일부처럼 보이게 알약(pill) 모양을 없애고 색상 배경 위에 바로 얹음.
+   accent 색이 제목표시줄 배경과 같아서 순위 숫자는 흰색으로 바꿔야 보임 */
+.titlebar-ticker{
+  background:transparent; border:none; border-radius:6px; padding:0;
+}
+.titlebar-ticker:active{background:rgba(255,255,255,0.15);}
+.titlebar-ticker .ticker-viewport{height:14px;}
+.titlebar-ticker .ticker-slide{color:rgba(255,255,255,0.92); font-size:12px;}
+.titlebar-ticker .ticker-slide .ticker-rank{color:#fff;}
+
 /* 티커 호버 시 펼쳐지는 1~10위 전체 목록 */
 .ticker-panel{
   position:absolute; z-index:40;
