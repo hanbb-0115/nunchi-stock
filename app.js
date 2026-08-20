@@ -151,6 +151,9 @@ const SKIN_OPTIONS = [
   { id: 'excel', label: '엑셀' },
   { id: 'word', label: '워드' },
   { id: 'ppt', label: '파워포인트' },
+  { id: 'kakao', label: '카카오톡' },
+  { id: 'outlook', label: '아웃룩' },
+  { id: 'chrome', label: '크롬(뉴스)' },
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
@@ -161,6 +164,9 @@ const skinTriggers = [
   document.getElementById('xlLogoBtn'),
   document.getElementById('wdLogoBtn'),
   document.getElementById('ppLogoBtn'),
+  document.getElementById('kkLogoBtn'),
+  document.getElementById('olLogoBtn'),
+  document.getElementById('crLogoBtn'),
 ];
 const settingsModal = document.getElementById('settingsModal');
 const settingsSkinList = document.getElementById('settingsSkinList');
@@ -755,13 +761,17 @@ let tickerItems = [];
 let tickerIndex = 0;
 let tickerTimer = null;
 
-// 기본 화면 + 엑셀/워드/PPT 위장 모드 제목표시줄, 총 4곳에 같은 티커를 동시에
-// 띄운다 — 어느 화면이 보이든(CSS가 나머지를 숨김) 항상 최신 상태로 맞춰져 있게.
+// 기본 화면 + 6개 위장 모드(엑셀/워드/PPT/카카오톡/아웃룩/크롬) 제목표시줄,
+// 총 7곳에 같은 티커를 동시에 띄운다 — 어느 화면이 보이든(CSS가 나머지를
+// 숨김) 항상 최신 상태로 맞춰져 있게.
 const TICKER_INSTANCES = [
   { wrap: 'tickerWrap', ticker: 'popularTicker', slide: 'tickerSlide', panel: 'tickerPanel' },
   { wrap: 'xlTickerWrap', ticker: 'xlPopularTicker', slide: 'xlTickerSlide', panel: 'xlTickerPanel' },
   { wrap: 'wdTickerWrap', ticker: 'wdPopularTicker', slide: 'wdTickerSlide', panel: 'wdTickerPanel' },
   { wrap: 'ppTickerWrap', ticker: 'ppPopularTicker', slide: 'ppTickerSlide', panel: 'ppTickerPanel' },
+  { wrap: 'kkTickerWrap', ticker: 'kkPopularTicker', slide: 'kkTickerSlide', panel: 'kkTickerPanel' },
+  { wrap: 'olTickerWrap', ticker: 'olPopularTicker', slide: 'olTickerSlide', panel: 'olTickerPanel' },
+  { wrap: 'crTickerWrap', ticker: 'crPopularTicker', slide: 'crTickerSlide', panel: 'crTickerPanel' },
 ].map((ids) => ({
   wrapEl: document.getElementById(ids.wrap),
   tickerEl: document.getElementById(ids.ticker),

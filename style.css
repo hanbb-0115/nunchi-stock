@@ -397,8 +397,8 @@ body.no-select{user-select:none;}
 /* 위장 모드 안(엑셀/워드/PPT)의 로고 버튼 — 진짜 앱처럼 보여야 해서 대놓고
    "메뉴 버튼"처럼 만들 순 없지만, 눌러서 테마를 바꿀 수 있다는 걸 알아챌 수
    있게 코너에 아주 작은 점 힌트만 둠 (위장은 유지하면서 발견 가능하게) */
-.xl-logo, .wd-logo, .pp-logo{position:relative;}
-.xl-logo::after, .wd-logo::after, .pp-logo::after{
+.xl-logo, .wd-logo, .pp-logo, .kk-logo, .ol-logo, .cr-logo{position:relative;}
+.xl-logo::after, .wd-logo::after, .pp-logo::after, .kk-logo::after, .ol-logo::after, .cr-logo::after{
   content:''; position:absolute; right:-3px; bottom:-3px;
   width:7px; height:7px; border-radius:50%;
   background:var(--accent); border:1.5px solid var(--bg-elev);
@@ -762,3 +762,285 @@ body.no-select{user-select:none;}
 
 [data-skin="ppt"] .search-result-row{border-bottom:1px solid var(--line);}
 [data-skin="ppt"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+
+/* ============================================================
+   위장 모드 — 카카오톡
+   ============================================================ */
+.kk-chrome, .kk-inputbar{display:none;}
+
+:root[data-skin="kakao"]{
+  --bg:#b2c7da;        /* 카카오톡 채팅창 배경 */
+  --bg-elev:#ffffff;
+  --bg-elev-2:#a7bed3;
+  --line:#9fb6cc;
+  --text:#1b1b1b;
+  --text-dim:#4a4a4a;
+  --text-faint:#6b6b6b;
+  --up:#c1272d;
+  --up-bg:transparent;
+  --down:#1461c7;
+  --down-bg:transparent;
+  --accent:#3c1e1e;    /* 말풍선 위 텍스트용 — 카카오 노랑은 텍스트로 쓰면 잘 안 보여서 진한 브라운 사용 */
+}
+
+[data-skin="kakao"] .app{max-width:640px;}
+[data-skin="kakao"] .topbar{display:none;}
+[data-skin="kakao"] .status-bar{margin-top:0;}
+
+[data-skin="kakao"] .kk-chrome{display:block;}
+
+.kk-titlebar{
+  background:#fff; color:#1b1b1b;
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; font-size:13px; font-weight:600;
+  border-bottom:1px solid var(--line);
+}
+.kk-logo{
+  width:18px; height:18px; border-radius:6px; background:#fee500;
+  border:none; cursor:pointer; padding:0; flex-shrink:0;
+}
+.kk-logo:active{transform:scale(0.9);}
+.kk-filename{opacity:0.85;}
+
+.kk-notice{
+  background:#fff6d9; color:#6b5a1f; font-size:11.5px;
+  padding:6px 12px; border-bottom:1px solid var(--line);
+}
+
+/* 본문 = 채팅방 배경(파란빛 회색) 위에 흰 말풍선 카드 */
+[data-skin="kakao"] .panels{background:var(--bg); padding:10px 10px 8px;}
+[data-skin="kakao"] .search-row input{border-radius:20px;}
+[data-skin="kakao"] .btn-primary{
+  flex-shrink:0; width:40px; height:40px; padding:0; border-radius:50%;
+  background:#fee500; color:#3c1e1e; font-size:0; position:relative;
+}
+[data-skin="kakao"] .btn-primary::after{
+  content:'➤'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:15px; color:#3c1e1e;
+}
+
+[data-skin="kakao"] .card-grid{gap:10px;}
+[data-skin="kakao"] .idx-card{
+  border:none; border-radius:4px 16px 16px 16px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  max-width:92%;
+}
+[data-skin="kakao"] .idx-spark{display:none;}
+[data-skin="kakao"] .idx-change{background:transparent !important; padding:1px 0;}
+
+[data-skin="kakao"] .tab.active{background:var(--bg-elev); color:var(--accent); font-weight:700;}
+[data-skin="kakao"] .foot{display:none;}
+
+[data-skin="kakao"] .kk-inputbar{
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; background:#fff; border-top:1px solid var(--line);
+}
+.kk-inputbar-plus{
+  width:26px; height:26px; border-radius:50%; background:var(--bg-elev-2);
+  color:#4a4a4a; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.kk-inputbar-field{
+  flex:1; color:#9aa0a6; font-size:12.5px;
+}
+.kk-inputbar-send{
+  width:26px; height:26px; border-radius:50%; background:#fee500; flex-shrink:0;
+}
+
+[data-skin="kakao"] .search-result-row{border-bottom:1px solid var(--line);}
+
+/* ============================================================
+   위장 모드 — 아웃룩
+   ============================================================ */
+.ol-chrome, .ol-statusbar{display:none;}
+
+:root[data-skin="outlook"]{
+  --bg:#faf9f8;
+  --bg-elev:#ffffff;
+  --bg-elev-2:#f3f2f1;
+  --line:#e1dfdd;
+  --text:#242424;
+  --text-dim:#605e5c;
+  --text-faint:#8a8886;
+  --up:#c1272d;
+  --up-bg:transparent;
+  --down:#1461c7;
+  --down-bg:transparent;
+  --accent:#0078d4;   /* 아웃룩 블루 */
+  --radius:0px;
+  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
+}
+
+[data-skin="outlook"] body{font-family:'Segoe UI',Calibri,'Malgun Gothic',sans-serif;}
+[data-skin="outlook"] .app{max-width:640px;}
+[data-skin="outlook"] .topbar{display:none;}
+[data-skin="outlook"] .status-bar{margin-top:0;}
+
+[data-skin="outlook"] .ol-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+
+.ol-titlebar{
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; gap:8px;
+  padding:5px 12px; font-size:12px;
+}
+.ol-logo{
+  width:16px; height:16px; border-radius:3px; background:#fff;
+  color:var(--accent); font-weight:800; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+  border:none; cursor:pointer; padding:0;
+}
+.ol-logo:active{transform:scale(0.9);}
+.ol-filename{opacity:0.95;}
+
+.ol-ribbon-tabs{
+  display:flex; gap:14px; padding:6px 12px 0;
+  font-size:12.5px; color:var(--text-dim);
+  border-bottom:1px solid var(--line);
+  overflow-x:auto; white-space:nowrap;
+  scrollbar-width:none;
+}
+.ol-ribbon-tabs::-webkit-scrollbar{display:none;}
+.ol-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
+.ol-ribbon-tabs span.active{
+  color:var(--accent); font-weight:700;
+  border-bottom:2px solid var(--accent);
+}
+
+.ol-ribbon-icons{
+  display:flex; gap:14px; padding:8px 12px;
+  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
+  overflow-x:auto; scrollbar-width:none;
+}
+.ol-ribbon-icons::-webkit-scrollbar{display:none;}
+.ol-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
+.ol-icon-group:last-child{border-right:none;}
+.ol-icon-group span{
+  width:16px; height:16px; border-radius:3px;
+  background:#d7d5d3;
+}
+
+/* 본문 = 메일 목록 — 카드 왼쪽에 발신자 아바타 원, 오른쪽엔 원래처럼 시간/등락 */
+[data-skin="outlook"] .panels{background:var(--bg);}
+[data-skin="outlook"] .search-row input{border-radius:0;}
+[data-skin="outlook"] .btn-primary{border-radius:0; background:var(--accent);}
+[data-skin="outlook"] .search-results{border-radius:0;}
+
+[data-skin="outlook"] .card-grid{gap:0; border-top:1px solid var(--line);}
+[data-skin="outlook"] .idx-card{
+  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
+  border-radius:0; padding:10px 12px 10px 46px; position:relative;
+}
+[data-skin="outlook"] .idx-card::before{
+  content:''; position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  background:var(--accent); opacity:0.85;
+}
+[data-skin="outlook"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
+[data-skin="outlook"] .idx-name{font-weight:600; font-size:13.5px;}
+[data-skin="outlook"] .idx-spark{display:none;}
+[data-skin="outlook"] .foot{display:none;}
+
+[data-skin="outlook"] .tab.active{background:var(--bg-elev); color:var(--accent); font-weight:700; border-bottom:2px solid var(--accent);}
+
+[data-skin="outlook"] .ol-statusbar{
+  display:flex; justify-content:space-between;
+  padding:4px 12px; font-size:11px; color:#fff;
+  background:var(--accent);
+}
+
+[data-skin="outlook"] .search-result-row{border-bottom:1px solid var(--line);}
+[data-skin="outlook"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
+
+/* ============================================================
+   위장 모드 — 크롬 브라우저(네이버 뉴스)
+   실제 앱 타이틀바 대신 브라우저 자체를 흉내내고, 시세 카드는 뉴스
+   페이지에 흔히 박혀 있는 "실시간 증시" 위젯처럼 보이게 테두리를 두름
+   ============================================================ */
+.cr-chrome{display:none;}
+
+:root[data-skin="chrome"]{
+  --bg:#f1f3f4;
+  --bg-elev:#ffffff;
+  --bg-elev-2:#f8f9fa;
+  --line:#dadce0;
+  --text:#202124;
+  --text-dim:#5f6368;
+  --text-faint:#80868b;
+  --up:#c1272d;
+  --up-bg:rgba(193,39,45,0.08);
+  --down:#1461c7;
+  --down-bg:rgba(20,97,199,0.08);
+  --accent:#03c75a;   /* 네이버 그린 */
+}
+
+[data-skin="chrome"] .app{max-width:640px;}
+[data-skin="chrome"] .topbar{display:none;}
+[data-skin="chrome"] .status-bar{margin-top:0; margin-left:18px; margin-right:18px;}
+
+[data-skin="chrome"] .cr-chrome{display:block; background:var(--bg-elev);}
+
+.cr-tabstrip{background:#dee1e6; padding:8px 8px 0;}
+.cr-tab{
+  display:flex; align-items:center; gap:6px;
+  width:200px; max-width:60%; padding:7px 10px;
+  background:var(--bg-elev); border-radius:8px 8px 0 0;
+  font-size:12px; color:var(--text);
+}
+.cr-logo{
+  width:14px; height:14px; border-radius:50%; background:var(--accent);
+  border:none; cursor:pointer; padding:0; flex-shrink:0;
+}
+.cr-logo:active{transform:scale(0.9);}
+.cr-tab-title{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cr-tab-close{color:var(--text-faint); font-size:13px; flex-shrink:0;}
+
+.cr-addressbar{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 12px; background:var(--bg-elev); border-bottom:1px solid var(--line);
+}
+.cr-nav-arrow{color:var(--text-faint); font-size:14px;}
+.cr-addr-pill{
+  flex:1; min-width:0; display:flex; align-items:center; gap:6px;
+  background:var(--bg-elev-2); border-radius:14px; padding:5px 12px;
+  font-size:11.5px; color:var(--text-dim);
+}
+.cr-addr-lock{font-size:10px;}
+.cr-addr-url{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cr-addr-star{color:var(--text-faint); font-size:13px;}
+
+.cr-newsnav{
+  display:flex; gap:14px; padding:8px 14px;
+  font-size:12.5px; color:var(--text-dim);
+  border-bottom:1px solid var(--line);
+  overflow-x:auto; white-space:nowrap; scrollbar-width:none;
+}
+.cr-newsnav::-webkit-scrollbar{display:none;}
+.cr-newsnav span{flex-shrink:0; cursor:default;}
+.cr-newsnav span.active{color:var(--accent); font-weight:700;}
+
+.cr-headlines{padding:12px 14px 4px;}
+.cr-headlines h4{margin:0 0 8px; font-size:13px; color:var(--text);}
+.cr-headline-row{display:flex; align-items:center; gap:10px; padding:6px 0;}
+.cr-headline-thumb{width:40px; height:28px; border-radius:4px; background:var(--bg-elev-2); flex-shrink:0;}
+.cr-headline-text{
+  font-size:12px; color:var(--text-dim); line-height:1.4;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+
+/* 실제 시세(탭+카드)는 뉴스 페이지에 박힌 "실시간 증시" 위젯처럼 테두리로 묶음 */
+[data-skin="chrome"] .tabs{
+  margin:8px 18px 0; border:1px solid var(--line); border-bottom:none;
+  border-radius:10px 10px 0 0; background:var(--bg-elev); flex-wrap:wrap;
+}
+[data-skin="chrome"] .tabs::before{
+  content:'📈 실시간 증시'; flex:1 0 100%;
+  font-size:12px; font-weight:700; color:var(--text-dim);
+  padding:10px 8px 2px;
+}
+[data-skin="chrome"] .panels{
+  margin:0 18px; padding:10px 14px 14px; background:var(--bg-elev);
+  border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+[data-skin="chrome"] .foot{display:none;}
+
+[data-skin="chrome"] .search-result-row{border-bottom:1px solid var(--line);}

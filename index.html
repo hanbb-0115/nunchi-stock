@@ -144,6 +144,77 @@
     </div>
   </div>
 
+  <!-- 카카오톡 위장 모드용 가짜 UI (data-skin="kakao"일 때만 CSS로 표시) -->
+  <div class="kk-chrome" aria-hidden="true">
+    <div class="kk-titlebar">
+      <button id="kkLogoBtn" class="kk-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false"></button>
+      <span class="kk-filename">업무 공지방</span>
+      <div id="kkTickerWrap" class="ticker-wrap">
+        <div id="kkPopularTicker" class="popular-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
+          <div class="ticker-viewport"><div id="kkTickerSlide" class="ticker-slide"></div></div>
+        </div>
+        <div id="kkTickerPanel" class="ticker-panel" hidden></div>
+      </div>
+    </div>
+    <div class="kk-notice">📌 공지 · 이번 주 금요일 전체 회의 3시</div>
+  </div>
+
+  <!-- 아웃룩 위장 모드용 가짜 UI (data-skin="outlook"일 때만 CSS로 표시) -->
+  <div class="ol-chrome" aria-hidden="true">
+    <div class="ol-titlebar">
+      <button id="olLogoBtn" class="ol-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">O</button>
+      <span class="ol-filename">받은 편지함 - Outlook</span>
+      <div id="olTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
+        <div id="olPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
+          <div class="ticker-viewport"><div id="olTickerSlide" class="ticker-slide"></div></div>
+        </div>
+        <div id="olTickerPanel" class="ticker-panel" hidden></div>
+      </div>
+    </div>
+    <div class="ol-ribbon-tabs">
+      <span>파일</span><span class="active">홈</span><span>보내기/받기</span><span>폴더</span><span>보기</span><span>도움말</span>
+    </div>
+    <div class="ol-ribbon-icons">
+      <div class="ol-icon-group"><span></span><span></span><span></span></div>
+      <div class="ol-icon-group"><span></span><span></span></div>
+      <div class="ol-icon-group"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- 크롬 브라우저 위장 모드용 가짜 UI (data-skin="chrome"일 때만 CSS로 표시) -->
+  <div class="cr-chrome" aria-hidden="true">
+    <div class="cr-tabstrip">
+      <div class="cr-tab active">
+        <button id="crLogoBtn" class="cr-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false"></button>
+        <span class="cr-tab-title">네이버 : 뉴스</span>
+        <span class="cr-tab-close">×</span>
+      </div>
+    </div>
+    <div class="cr-addressbar">
+      <span class="cr-nav-arrow">‹</span><span class="cr-nav-arrow">›</span><span class="cr-nav-arrow">⟳</span>
+      <span class="cr-addr-pill">
+        <span class="cr-addr-lock">🔒</span>
+        <span class="cr-addr-url">news.naver.com/section/101</span>
+      </span>
+      <div id="crTickerWrap" class="ticker-wrap">
+        <div id="crPopularTicker" class="popular-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
+          <div class="ticker-viewport"><div id="crTickerSlide" class="ticker-slide"></div></div>
+        </div>
+        <div id="crTickerPanel" class="ticker-panel" hidden></div>
+      </div>
+      <span class="cr-addr-star">☆</span>
+    </div>
+    <div class="cr-newsnav">
+      <span class="active">경제</span><span>정치</span><span>사회</span><span>IT/과학</span><span>세계</span>
+    </div>
+    <div class="cr-headlines">
+      <h4>오늘의 주요뉴스</h4>
+      <div class="cr-headline-row"><span class="cr-headline-thumb"></span><span class="cr-headline-text">"내년 성장률 전망 상향"… 정부, 경제정책방향 발표</span></div>
+      <div class="cr-headline-row"><span class="cr-headline-thumb"></span><span class="cr-headline-text">폭염 속 전력수요 역대 최고치 경신</span></div>
+      <div class="cr-headline-row"><span class="cr-headline-thumb"></span><span class="cr-headline-text">서울시, 대중교통 요금 동결 발표</span></div>
+    </div>
+  </div>
+
   <div id="settingsModal" class="settings-modal" hidden>
     <div id="settingsBackdrop" class="settings-backdrop"></div>
     <div class="settings-panel" role="dialog" aria-modal="true" aria-label="설정">
@@ -242,6 +313,17 @@
   <div class="pp-statusbar" aria-hidden="true">
     <span>슬라이드 1/3</span>
     <span class="pp-statusbar-right">메모 &nbsp;&nbsp; 한국어 &nbsp;&nbsp; 100%</span>
+  </div>
+
+  <div class="kk-inputbar" aria-hidden="true">
+    <span class="kk-inputbar-plus">＋</span>
+    <span class="kk-inputbar-field">메시지 입력</span>
+    <span class="kk-inputbar-send"></span>
+  </div>
+
+  <div class="ol-statusbar" aria-hidden="true">
+    <span>항목 4개</span>
+    <span class="ol-statusbar-right">연결됨: Exchange &nbsp;&nbsp; 100%</span>
   </div>
 
 </div>
