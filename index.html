@@ -64,86 +64,6 @@
     </div>
   </header>
 
-  <!-- 엑셀 위장 모드용 가짜 UI (data-skin="excel"일 때만 CSS로 표시) -->
-  <div class="xl-chrome" aria-hidden="true">
-    <div class="xl-titlebar">
-      <button id="xlLogoBtn" class="xl-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">X</button>
-      <span class="xl-filename">통합 문서1 - Excel</span>
-      <div id="xlTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
-        <div id="xlPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
-          <div class="ticker-viewport"><div id="xlTickerSlide" class="ticker-slide"></div></div>
-        </div>
-        <div id="xlTickerPanel" class="ticker-panel" hidden></div>
-      </div>
-    </div>
-    <div class="xl-ribbon-tabs">
-      <span>파일</span><span class="active">홈</span><span>삽입</span><span>페이지 레이아웃</span><span>수식</span><span>데이터</span><span>검토</span><span>보기</span>
-    </div>
-    <div class="xl-ribbon-icons">
-      <div class="xl-icon-group"><span></span><span></span><span></span><span></span></div>
-      <div class="xl-icon-group"><span></span><span></span><span></span></div>
-      <div class="xl-icon-group"><span></span><span></span><span></span><span></span></div>
-      <div class="xl-icon-group"><span></span><span></span></div>
-    </div>
-    <div class="xl-formula-bar">
-      <span class="xl-namebox">A1</span>
-      <span class="xl-fx">𝑓𝑥</span>
-      <span class="xl-formula-input"></span>
-    </div>
-    <div class="xl-colheaders">
-      <span class="xl-corner"></span>
-      <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
-    </div>
-  </div>
-
-  <!-- 워드 위장 모드용 가짜 UI (data-skin="word"일 때만 CSS로 표시) -->
-  <div class="wd-chrome" aria-hidden="true">
-    <div class="wd-titlebar">
-      <button id="wdLogoBtn" class="wd-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">W</button>
-      <span class="wd-filename">문서1 - Word</span>
-      <div id="wdTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
-        <div id="wdPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
-          <div class="ticker-viewport"><div id="wdTickerSlide" class="ticker-slide"></div></div>
-        </div>
-        <div id="wdTickerPanel" class="ticker-panel" hidden></div>
-      </div>
-    </div>
-    <div class="wd-ribbon-tabs">
-      <span>파일</span><span class="active">홈</span><span>삽입</span><span>디자인</span><span>레이아웃</span><span>참조</span><span>편지</span><span>검토</span><span>보기</span>
-    </div>
-    <div class="wd-ribbon-icons">
-      <div class="wd-icon-group"><span></span><span></span><span></span><span></span></div>
-      <div class="wd-icon-group"><span></span><span></span><span></span></div>
-      <div class="wd-icon-group"><span></span><span></span><span></span><span></span></div>
-    </div>
-    <div class="wd-ruler"></div>
-  </div>
-
-  <!-- 파워포인트 위장 모드용 가짜 UI (data-skin="ppt"일 때만 CSS로 표시) -->
-  <div class="pp-chrome" aria-hidden="true">
-    <div class="pp-titlebar">
-      <button id="ppLogoBtn" class="pp-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">P</button>
-      <span class="pp-filename">프레젠테이션1 - PowerPoint</span>
-      <div id="ppTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
-        <div id="ppPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
-          <div class="ticker-viewport"><div id="ppTickerSlide" class="ticker-slide"></div></div>
-        </div>
-        <div id="ppTickerPanel" class="ticker-panel" hidden></div>
-      </div>
-    </div>
-    <div class="pp-ribbon-tabs">
-      <span>파일</span><span class="active">홈</span><span>삽입</span><span>디자인</span><span>전환</span><span>애니메이션</span><span>슬라이드 쇼</span><span>검토</span><span>보기</span>
-    </div>
-    <div class="pp-ribbon-icons">
-      <div class="pp-icon-group"><span></span><span></span><span></span><span></span></div>
-      <div class="pp-icon-group"><span></span><span></span><span></span></div>
-      <div class="pp-icon-group"><span></span><span></span><span></span><span></span></div>
-    </div>
-    <div class="pp-filmstrip">
-      <span class="pp-thumb active"></span><span class="pp-thumb"></span><span class="pp-thumb"></span>
-    </div>
-  </div>
-
   <div id="settingsModal" class="settings-modal" hidden>
     <div id="settingsBackdrop" class="settings-backdrop"></div>
     <div class="settings-panel" role="dialog" aria-modal="true" aria-label="설정">
@@ -228,21 +148,6 @@
   <footer class="foot">
     <span>시세 제공: 한국투자증권 오픈API 연동 시 실시간 표시</span>
   </footer>
-
-  <div class="xl-statusbar" aria-hidden="true">
-    <span>준비</span>
-    <span class="xl-statusbar-right">개수: 3 &nbsp;&nbsp; 평균: - &nbsp;&nbsp; 100%</span>
-  </div>
-
-  <div class="wd-statusbar" aria-hidden="true">
-    <span>페이지 1/1</span>
-    <span class="wd-statusbar-right">단어 수: 128 &nbsp;&nbsp; 한국어 &nbsp;&nbsp; 100%</span>
-  </div>
-
-  <div class="pp-statusbar" aria-hidden="true">
-    <span>슬라이드 1/3</span>
-    <span class="pp-statusbar-right">메모 &nbsp;&nbsp; 한국어 &nbsp;&nbsp; 100%</span>
-  </div>
 
 </div>
 
