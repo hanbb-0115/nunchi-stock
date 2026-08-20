@@ -974,6 +974,29 @@ loadGlobal();
 renderWatchlist();
 loadPopularTicker();
 
+// ---------- 자동 갱신 ----------
+// 원래는 새로고침 버튼을 눌러야만 최신 시세가 반영됐음 — 서버 캐시 주기(15초)에
+// 맞춰서 화면을 켜둔 채로 있으면 알아서 갱신되게 함. 탭이 안 보일 땐(다른 탭/창으로
+// 전환) 건너뛰어서 불필요한 요청을 안 만들고, 다시 돌아오면 바로 한 번 갱신해서
+// 오래 떠나있던 사이의 변동도 즉시 반영함.
+const AUTO_REFRESH_INTERVAL_MS = 15000;
+setInterval(() => {
+  if (document.hidden) return;
+  loadDomestic();
+  loadGlobal();
+  renderWatchlist();
+  loadPopularTicker();
+}, AUTO_REFRESH_INTERVAL_MS);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    loadDomestic();
+    loadGlobal();
+    renderWatchlist();
+    loadPopularTicker();
+  }
+});
+
 // ---------- 서비스워커 등록 (PWA 설치 지원) ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
