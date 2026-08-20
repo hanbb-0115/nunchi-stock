@@ -1,6 +1,28 @@
 const WATCHLIST_KEY = 'nunchi_watchlist_v1';
 const DOMESTIC_ORDER_KEY = 'nunchi_domestic_cards_v1';
 const GLOBAL_ORDER_KEY = 'nunchi_global_cards_v1';
+const DOMESTIC_CARDS_CACHE_KEY = 'nunchi_cache_domestic_v1';
+const GLOBAL_CARDS_CACHE_KEY = 'nunchi_cache_global_v1';
+const WATCH_CARDS_CACHE_KEY = 'nunchi_cache_watch_v1';
+
+// 마지막으로 성공했던 카드 목록을 localStorage에 남겨뒀다가, 앱을 다시 열었을 때
+// 실전투자 키 레이트리밋 때문에 몇 초씩 걸리는 실제 시세를 기다리는 동안 화면이
+// 비어있지 않게 바로 보여줌(stale-while-revalidate) — 최신 값이 오면 바로 교체됨.
+function readCardsCache(key) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(key));
+    return Array.isArray(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+function writeCardsCache(key, cards) {
+  try {
+    localStorage.setItem(key, JSON.stringify(cards));
+  } catch {
+    // 저장 실패해도(용량 초과 등) 화면 표시엔 지장 없음 — 다음엔 그냥 캐시 없이 시작
+  }
+}
 
 const DEFAULT_DOMESTIC_ORDER = [
   { kind: 'index', id: 'KOSPI' },
@@ -379,6 +401,18 @@ function removeDomesticCard(symbol) {
 async function loadDomestic() {
   const grid = document.getElementById('domesticGrid');
   const order = getDomesticOrder();
+
+  const cached = readCardsCache(DOMESTIC_CARDS_CACHE_KEY);
+  if (cached) {
+    grid.innerHTML = cached.map(renderCard).join('');
+    grid.querySelectorAll('.card-remove').forEach((btn) => {
+      btn.addEventListener('click', () => removeDomesticCard(btn.dataset.symbol));
+    });
+    grid.querySelectorAll('.card-star').forEach((btn) => {
+      btn.addEventListener('click', () => toggleStar(btn));
+    });
+  }
+
   try {
     const indices = await MarketData.getDomesticIndices();
     const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
@@ -416,6 +450,7 @@ async function loadDomestic() {
       .filter(Boolean);
 
     grid.innerHTML = cards.map(renderCard).join('');
+    writeCardsCache(DOMESTIC_CARDS_CACHE_KEY, cards);
     document.getElementById('domesticUpdated').textContent = nowLabel();
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeDomesticCard(btn.dataset.symbol));
@@ -424,7 +459,7 @@ async function loadDomestic() {
       btn.addEventListener('click', () => toggleStar(btn));
     });
   } catch (err) {
-    showStatus('국내 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
+    if (!cached) showStatus('국내 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
   }
 }
 
@@ -450,6 +485,18 @@ function removeGlobalCard(symbol) {
 async function loadGlobal() {
   const grid = document.getElementById('globalGrid');
   const order = getGlobalOrder();
+
+  const cached = readCardsCache(GLOBAL_CARDS_CACHE_KEY);
+  if (cached) {
+    grid.innerHTML = cached.map(renderCard).join('');
+    grid.querySelectorAll('.card-remove').forEach((btn) => {
+      btn.addEventListener('click', () => removeGlobalCard(btn.dataset.symbol));
+    });
+    grid.querySelectorAll('.card-star').forEach((btn) => {
+      btn.addEventListener('click', () => toggleStar(btn));
+    });
+  }
+
   try {
     const indices = await MarketData.getGlobalIndices();
     const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
@@ -488,6 +535,7 @@ async function loadGlobal() {
       .filter(Boolean);
 
     grid.innerHTML = cards.map(renderCard).join('');
+    writeCardsCache(GLOBAL_CARDS_CACHE_KEY, cards);
     document.getElementById('globalUpdated').textContent = nowLabel();
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeGlobalCard(btn.dataset.symbol));
@@ -496,7 +544,7 @@ async function loadGlobal() {
       btn.addEventListener('click', () => toggleStar(btn));
     });
   } catch (err) {
-    showStatus('해외 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
+    if (!cached) showStatus('해외 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
   }
 }
 
@@ -532,6 +580,14 @@ async function renderWatchlist() {
   }
   empty.classList.remove('show');
 
+  const cached = readCardsCache(WATCH_CARDS_CACHE_KEY);
+  if (cached) {
+    wrap.innerHTML = cached.map((q) => renderCard({ ...q, starrable: true, starred: true })).join('');
+    wrap.querySelectorAll('.card-star').forEach((btn) => {
+      btn.addEventListener('click', () => toggleStar(btn));
+    });
+  }
+
   const quotes = await Promise.all(
     list.map(async (it) => {
       try {
@@ -548,6 +604,7 @@ async function renderWatchlist() {
   );
 
   wrap.innerHTML = quotes.map((q) => renderCard({ ...q, starrable: true, starred: true })).join('');
+  writeCardsCache(WATCH_CARDS_CACHE_KEY, quotes);
 
   wrap.querySelectorAll('.card-star').forEach((btn) => {
     btn.addEventListener('click', () => toggleStar(btn));
@@ -682,7 +739,22 @@ const TICKER_INSTANCES = [
   panelEl: document.getElementById(ids.panel),
 }));
 
+const TICKER_CACHE_KEY = 'nunchi_cache_ticker_v1';
+
 async function loadPopularTicker() {
+  // 인기 검색어 API(Upstash+KIS 마스터 검증) 응답도 기다리는 동안 티커가 비어있지
+  // 않게, 지난번에 성공했던 순위를 먼저 보여줌
+  const cachedRanked = readCardsCache(TICKER_CACHE_KEY);
+  if (cachedRanked && cachedRanked.length > 0) {
+    tickerItems = cachedRanked;
+    tickerIndex = 0;
+    TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = false; });
+    paintTickerSlide();
+    if (tickerItems.length > 1) {
+      tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+    }
+  }
+
   const [domestic, overseas] = await Promise.all([
     MarketData.getPopularSearches('domestic'),
     MarketData.getPopularSearches('overseas'),
@@ -699,6 +771,7 @@ async function loadPopularTicker() {
     tickerItems = [];
     return;
   }
+  writeCardsCache(TICKER_CACHE_KEY, ranked);
 
   // 순위/이름은 시세 없이 바로 보여줌 — 실전투자 키는 초당 호출 제한 때문에
   // 종목 10개 시세를 다 받으려면(캐시 없으면) 최대 몇 초 걸릴 수 있어서, 그동안

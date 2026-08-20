@@ -137,13 +137,32 @@ async function kisGetOnce(path, trId, params) {
   return json;
 }
 
+function invalidateToken() {
+  // 로컬(개발)과 Render(배포)가 같은 App Key를 동시에 쓰다 보니, 우리 쪽 만료 시각
+  // 계산으로는 아직 안 지났어도 KIS 쪽에서 이미 이 토큰을 거부하는 경우가 있었음
+  // ("기간이 만료된 token 입니다" — 다른 인스턴스가 새 토큰을 발급받으며 이전 토큰이
+  // 무효화된 것으로 추정). 캐시를 비우면 다음 호출에서 새 토큰을 받아옴.
+  cachedToken = null;
+  cachedTokenExpiry = 0;
+  try {
+    fs.unlinkSync(TOKEN_CACHE_FILE);
+  } catch (err) {
+    // 파일이 없으면 그냥 넘어감
+  }
+}
+
 async function kisGet(path, trId, params, retriesLeft = 2) {
   await throttleKisCall();
   try {
     return await kisGetOnce(path, trId, params);
   } catch (err) {
-    if (retriesLeft > 0 && String(err.message).includes('초당 거래건수')) {
+    const message = String(err.message);
+    if (retriesLeft > 0 && message.includes('초당 거래건수')) {
       await sleep(MIN_CALL_INTERVAL_MS);
+      return kisGet(path, trId, params, retriesLeft - 1);
+    }
+    if (retriesLeft > 0 && message.includes('token')) {
+      invalidateToken();
       return kisGet(path, trId, params, retriesLeft - 1);
     }
     throw err;
