@@ -272,13 +272,51 @@ function renderCard(item) {
       </div>
       <div class="idx-spark">${sparklineSvg(item.trend, cls)}</div>
       <div class="idx-numbers">
-        <div class="idx-price">${formatPrice(item.price)}<span class="idx-unit">${item.market === 'overseas' ? '달러' : '원'}</span></div>
+        <div class="idx-price"><span class="idx-price-value" data-anim-key="${escapeHtml(String(item.id || item.symbol || ''))}" data-raw-price="${item.price}">${formatPrice(item.price)}</span><span class="idx-unit">${item.market === 'overseas' ? '달러' : '원'}</span></div>
         <div class="idx-change ${cls}">
           ${changeSign(item.change)}${formatPrice(item.change)} (${changeSign(item.changePct)}${item.changePct.toFixed(2)}%)
         </div>
       </div>
     </div>
   `;
+}
+
+// ---------- 가격 변동 시 숫자 롤링 애니메이션 (토스증권 스타일) ----------
+function animateNumber(el, from, to, duration = 500) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic — 빠르게 시작해서 서서히 멈춤
+    el.textContent = formatPrice(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = formatPrice(to); // 반올림 오차 없이 정확한 최종값으로 마무리
+  }
+  requestAnimationFrame(tick);
+}
+
+// grid.innerHTML을 통째로 교체하기 전에 기존 가격을 기억해뒀다가, 교체 후 값이
+// 바뀐 카드만 이전 값에서 새 값으로 숫자가 굴러가듯 애니메이션하고 카드에 짧게
+// 상승/하락 색이 비침 — grid.innerHTML = cards.map(renderCard).join('') 대신 이걸 씀
+function renderCardsWithAnimation(grid, cards) {
+  const prevPrices = {};
+  grid.querySelectorAll('.idx-price-value[data-anim-key]').forEach((el) => {
+    prevPrices[el.dataset.animKey] = Number(el.dataset.rawPrice);
+  });
+
+  grid.innerHTML = cards.map(renderCard).join('');
+
+  grid.querySelectorAll('.idx-price-value[data-anim-key]').forEach((el) => {
+    const key = el.dataset.animKey;
+    const to = Number(el.dataset.rawPrice);
+    const from = prevPrices[key];
+    if (from === undefined || Number.isNaN(from) || from === to) return;
+    animateNumber(el, from, to);
+    const card = el.closest('.idx-card');
+    if (!card) return;
+    const flashClass = to > from ? 'price-flash-up' : 'price-flash-down';
+    card.classList.add(flashClass);
+    setTimeout(() => card.classList.remove(flashClass), 700);
+  });
 }
 
 function isInWatchlist(symbol) {
@@ -449,7 +487,7 @@ async function loadDomestic() {
       })
       .filter(Boolean);
 
-    grid.innerHTML = cards.map(renderCard).join('');
+    renderCardsWithAnimation(grid, cards);
     writeCardsCache(DOMESTIC_CARDS_CACHE_KEY, cards);
     document.getElementById('domesticUpdated').textContent = nowLabel();
     grid.querySelectorAll('.card-remove').forEach((btn) => {
@@ -534,7 +572,7 @@ async function loadGlobal() {
       })
       .filter(Boolean);
 
-    grid.innerHTML = cards.map(renderCard).join('');
+    renderCardsWithAnimation(grid, cards);
     writeCardsCache(GLOBAL_CARDS_CACHE_KEY, cards);
     document.getElementById('globalUpdated').textContent = nowLabel();
     grid.querySelectorAll('.card-remove').forEach((btn) => {
@@ -603,7 +641,7 @@ async function renderWatchlist() {
     })
   );
 
-  wrap.innerHTML = quotes.map((q) => renderCard({ ...q, starrable: true, starred: true })).join('');
+  renderCardsWithAnimation(wrap, quotes.map((q) => ({ ...q, starrable: true, starred: true })));
   writeCardsCache(WATCH_CARDS_CACHE_KEY, quotes);
 
   wrap.querySelectorAll('.card-star').forEach((btn) => {

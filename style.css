@@ -219,6 +219,13 @@ body{
   position:relative;
   touch-action:pan-y;
 }
+
+/* 가격이 바뀔 때 숫자가 굴러가는 동안(renderCardsWithAnimation) 카드에 짧게
+   상승/하락 색을 비춰서 어디가 바뀌었는지 눈에 띄게 함 (토스증권 스타일) */
+@keyframes price-flash-up{from{background:var(--up-bg);}to{background:var(--bg-elev);}}
+@keyframes price-flash-down{from{background:var(--down-bg);}to{background:var(--bg-elev);}}
+.idx-card.price-flash-up{animation:price-flash-up 700ms ease-out;}
+.idx-card.price-flash-down{animation:price-flash-down 700ms ease-out;}
 .idx-card.has-remove{padding-top:20px;}
 .idx-card.card-dragging{
   z-index:5; box-shadow:0 8px 24px rgba(0,0,0,0.4);
