@@ -972,9 +972,9 @@ body.no-select{user-select:none;}
   --accent:#03c75a;   /* 네이버 그린 */
 }
 
-[data-skin="chrome"] .app{max-width:640px;}
+[data-skin="chrome"] .app{max-width:640px; background:var(--bg-elev);}
 [data-skin="chrome"] .topbar{display:none;}
-[data-skin="chrome"] .status-bar{margin-top:0; margin-left:18px; margin-right:18px;}
+[data-skin="chrome"] .status-bar{margin-top:0; margin-left:14px; margin-right:14px;}
 
 [data-skin="chrome"] .cr-chrome{display:block; background:var(--bg-elev);}
 
@@ -1026,21 +1026,19 @@ body.no-select{user-select:none;}
   overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
 }
 
-/* 실제 시세(탭+카드)는 뉴스 페이지에 박힌 "실시간 증시" 위젯처럼 테두리로 묶음 */
+/* 실제 시세(탭+카드)는 별도 박스로 두르지 않고, 위쪽 가짜 뉴스 UI와 같은
+   좌우 여백(14px)·배경(흰색)으로 이어서 한 페이지처럼 자연스럽게 연결함 */
 [data-skin="chrome"] .tabs{
-  margin:8px 18px 0; border:1px solid var(--line); border-bottom:none;
-  border-radius:10px 10px 0 0; background:var(--bg-elev); flex-wrap:wrap;
+  margin:0 14px 10px; padding:0; background:transparent; flex-wrap:wrap;
 }
 [data-skin="chrome"] .tabs::before{
   content:'📈 실시간 증시'; flex:1 0 100%;
-  font-size:12px; font-weight:700; color:var(--text-dim);
-  padding:10px 8px 2px;
+  font-size:13px; font-weight:700; color:var(--text);
+  padding:0 0 8px;
 }
-[data-skin="chrome"] .panels{
-  margin:0 18px; padding:10px 14px 14px; background:var(--bg-elev);
-  border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
+[data-skin="chrome"] .tab{background:transparent;}
+[data-skin="chrome"] .tab.active{background:var(--bg-elev-2);}
+[data-skin="chrome"] .panels{padding:0 14px 14px;}
 [data-skin="chrome"] .foot{display:none;}
 
 [data-skin="chrome"] .search-result-row{border-bottom:1px solid var(--line);}
