@@ -154,9 +154,14 @@ const SKIN_OPTIONS = [
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
-// 위장 모드에서도 헤더(브랜드+티커+설정+새로고침) 구조를 그대로 쓰기 때문에,
-// settingsBtn 하나로 위장 테마/다크모드를 모두 바꿀 수 있다.
-const skinTriggers = [document.getElementById('settingsBtn')];
+// 상단바(기본 화면)의 settingsBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
+// 같은 설정 패널을 연다 — 어느 화면이 보이든 항상 위장 테마/다크모드를 바꿀 수 있게.
+const skinTriggers = [
+  document.getElementById('settingsBtn'),
+  document.getElementById('xlLogoBtn'),
+  document.getElementById('wdLogoBtn'),
+  document.getElementById('ppLogoBtn'),
+];
 const settingsModal = document.getElementById('settingsModal');
 const settingsSkinList = document.getElementById('settingsSkinList');
 let activeSkinTrigger = null;
@@ -750,10 +755,13 @@ let tickerItems = [];
 let tickerIndex = 0;
 let tickerTimer = null;
 
-// 위장 모드도 같은 헤더를 그대로 쓰기 때문에 티커 인스턴스는 하나뿐 —
-// 배열 형태는 남겨서 아래 forEach 로직들을 그대로 재사용한다.
+// 기본 화면 + 엑셀/워드/PPT 위장 모드 제목표시줄, 총 4곳에 같은 티커를 동시에
+// 띄운다 — 어느 화면이 보이든(CSS가 나머지를 숨김) 항상 최신 상태로 맞춰져 있게.
 const TICKER_INSTANCES = [
   { wrap: 'tickerWrap', ticker: 'popularTicker', slide: 'tickerSlide', panel: 'tickerPanel' },
+  { wrap: 'xlTickerWrap', ticker: 'xlPopularTicker', slide: 'xlTickerSlide', panel: 'xlTickerPanel' },
+  { wrap: 'wdTickerWrap', ticker: 'wdPopularTicker', slide: 'wdTickerSlide', panel: 'wdTickerPanel' },
+  { wrap: 'ppTickerWrap', ticker: 'ppPopularTicker', slide: 'ppTickerSlide', panel: 'ppTickerPanel' },
 ].map((ids) => ({
   wrapEl: document.getElementById(ids.wrap),
   tickerEl: document.getElementById(ids.ticker),
