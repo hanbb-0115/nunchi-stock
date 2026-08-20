@@ -761,6 +761,18 @@ let tickerItems = [];
 let tickerIndex = 0;
 let tickerTimer = null;
 
+// tickerTimer를 새로 세팅하기 전엔 항상 이걸로 기존 걸 먼저 정리함 — 그냥
+// `tickerTimer = setInterval(...)`로 덮어쓰면 이전 인터벌이 참조를 잃고도
+// 백그라운드에서 계속 돌아서(leak), loadPopularTicker가 15초 자동 갱신마다
+// 매번 호출되는 지금 구조에서는 인터벌이 계속 쌓여 티커가 여러 칸씩 빠르게
+// 건너뛰는 버그로 이어졌었음(2026-08-20 발견/수정)
+function restartTickerAutoAdvance() {
+  clearInterval(tickerTimer);
+  if (tickerItems.length > 1) {
+    tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+  }
+}
+
 // 기본 화면 + 6개 위장 모드(엑셀/워드/PPT/카카오톡/아웃룩/크롬) 제목표시줄,
 // 총 7곳에 같은 티커를 동시에 띄운다 — 어느 화면이 보이든(CSS가 나머지를
 // 숨김) 항상 최신 상태로 맞춰져 있게.
@@ -790,9 +802,7 @@ async function loadPopularTicker() {
     tickerIndex = 0;
     TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = false; });
     paintTickerSlide();
-    if (tickerItems.length > 1) {
-      tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
-    }
+    restartTickerAutoAdvance();
   }
 
   const [domestic, overseas] = await Promise.all([
@@ -818,9 +828,7 @@ async function loadPopularTicker() {
   // 티커가 빈 채로 떠 있지 않게 먼저 그리고 시세는 뒤이어 채워 넣음
   tickerItems = ranked;
   paintTickerSlide();
-  if (tickerItems.length > 1) {
-    tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
-  }
+  restartTickerAutoAdvance();
 
   // 클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음
   tickerItems = await Promise.all(
@@ -922,7 +930,7 @@ TICKER_INSTANCES.forEach(({ wrapEl, tickerEl, panelEl }) => {
   });
   wrapEl.addEventListener('mouseleave', () => {
     panelEl.hidden = true;
-    if (tickerItems.length > 1) tickerTimer = setInterval(advanceTicker, TICKER_INTERVAL_MS);
+    restartTickerAutoAdvance();
   });
 });
 
