@@ -95,24 +95,26 @@ function sparklineSvg(trend, cls) {
   `;
 }
 
-// ---------- 다크모드 / 라이트모드 ----------
+// ---------- 다크모드 / 라이트모드 (설정 패널 안의 라이트/다크 선택 버튼) ----------
 const THEME_KEY = 'nunchi_theme_v1';
-const SUN_ICON = `<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 4a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1zm0 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8 4a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zM6 12a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1zm11.657-6.657a1 1 0 0 1 0 1.414l-.707.707a1 1 0 1 1-1.414-1.414l.707-.707a1 1 0 0 1 1.414 0zM7.05 16.95a1 1 0 0 1 0 1.414l-.707.707A1 1 0 1 1 4.93 17.657l.707-.707a1 1 0 0 1 1.414 0zM12 19a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zm5.657-2.05a1 1 0 0 1 1.414 0l.707.707a1 1 0 1 1-1.414 1.414l-.707-.707a1 1 0 0 1 0-1.414zM6.343 6.343a1 1 0 0 1 1.414 0l.707.707A1 1 0 1 1 7.05 8.464l-.707-.707a1 1 0 0 1 0-1.414z"/></svg>`;
-const MOON_ICON = `<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M20.354 15.354A9 9 0 0 1 8.646 3.646a9.003 9.003 0 1 0 11.708 11.708z"/></svg>`;
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem(THEME_KEY, theme);
-  document.getElementById('themeToggleBtn').innerHTML = theme === 'dark' ? SUN_ICON : MOON_ICON;
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b0d10' : '#f2f4f7');
+  document.querySelectorAll('.settings-theme-option').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
 }
 
 applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
 
-document.getElementById('themeToggleBtn').addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  applyTheme(current === 'dark' ? 'light' : 'dark');
+document.querySelectorAll('.settings-theme-option').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    applyTheme(btn.dataset.theme);
+    track('theme_change', { theme: btn.dataset.theme });
+  });
 });
 
 // ---------- 설치 (PWA) ----------
@@ -141,9 +143,9 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
 });
 
-// ---------- 위장 테마 메뉴 ----------
+// ---------- 설정 패널 (위장 테마 + 다크모드를 한 곳에 모음) ----------
 const SKIN_KEY = 'nunchi_skin_v1';
-// 새 테마를 추가할 땐 여기에 항목만 더하면 메뉴에 자동으로 나타남 (CSS 구현은 별도)
+// 새 테마를 추가할 땐 여기에 항목만 더하면 설정 목록에 자동으로 나타남 (CSS 구현은 별도)
 const SKIN_OPTIONS = [
   { id: 'none', label: '기본 화면' },
   { id: 'excel', label: '엑셀' },
@@ -152,63 +154,54 @@ const SKIN_OPTIONS = [
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
-// 상단바(기본 화면)의 skinMenuBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
-// 같은 드롭다운을 연다 — 어느 화면이 보이든 항상 테마를 바꿀 수 있게.
+// 상단바(기본 화면)의 settingsBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
+// 같은 설정 패널을 연다 — 어느 화면이 보이든 항상 위장 테마/다크모드를 바꿀 수 있게.
 const skinTriggers = [
-  document.getElementById('skinMenuBtn'),
+  document.getElementById('settingsBtn'),
   document.getElementById('xlLogoBtn'),
   document.getElementById('wdLogoBtn'),
   document.getElementById('ppLogoBtn'),
 ];
-const skinDropdown = document.getElementById('skinDropdown');
+const settingsModal = document.getElementById('settingsModal');
+const settingsSkinList = document.getElementById('settingsSkinList');
 let activeSkinTrigger = null;
 
 function applySkin(skin) {
   document.documentElement.setAttribute('data-skin', skin);
   localStorage.setItem(SKIN_KEY, skin);
   const opt = SKIN_OPTIONS.find((o) => o.id === skin);
-  const label = opt && skin !== 'none' ? `위장 중: ${opt.label} (클릭해서 변경)` : '화면 위장 테마 선택';
+  const label = opt && skin !== 'none' ? `위장 중: ${opt.label} (클릭해서 설정 열기)` : '설정';
   skinTriggers.forEach((btn) => {
     if (btn.classList.contains('icon-btn')) btn.classList.toggle('skin-active', skin !== 'none');
     btn.title = label;
   });
-  renderSkinMenu();
+  renderSkinList();
 }
 
-function renderSkinMenu() {
+function renderSkinList() {
   const current = document.documentElement.getAttribute('data-skin') || 'none';
-  skinDropdown.innerHTML = SKIN_OPTIONS.map((o) => `
+  settingsSkinList.innerHTML = SKIN_OPTIONS.map((o) => `
     <button class="skin-option${o.id === current ? ' selected' : ''}" data-skin="${o.id}" ${o.comingSoon ? 'disabled' : ''}>
       <span>${o.label}</span>
       ${o.comingSoon ? '<span class="skin-badge">준비중</span>' : '<span class="skin-check">✓</span>'}
     </button>
   `).join('');
 
-  skinDropdown.querySelectorAll('.skin-option:not([disabled])').forEach((btn) => {
+  settingsSkinList.querySelectorAll('.skin-option:not([disabled])').forEach((btn) => {
     btn.addEventListener('click', () => {
       applySkin(btn.dataset.skin);
-      track('skin_change', { skin: btn.dataset.skin, source: 'menu' });
-      closeSkinMenu();
+      track('skin_change', { skin: btn.dataset.skin, source: 'settings' });
     });
   });
 }
 
-function openSkinMenu(triggerEl) {
+function openSettings(triggerEl) {
   activeSkinTrigger = triggerEl;
-  skinDropdown.hidden = false;
-  triggerEl.setAttribute('aria-expanded', 'true');
-
-  // 어느 버튼에서 열렸든 그 버튼 바로 아래에 붙게 위치 계산 (화면 밖으로 안 나가게 클램프)
-  const rect = triggerEl.getBoundingClientRect();
-  const dropdownWidth = 168;
-  let left = rect.left;
-  left = Math.min(left, window.innerWidth - dropdownWidth - 8);
-  left = Math.max(left, 8);
-  skinDropdown.style.top = `${rect.bottom + 6}px`;
-  skinDropdown.style.left = `${left}px`;
+  settingsModal.hidden = false;
+  if (triggerEl) triggerEl.setAttribute('aria-expanded', 'true');
 }
-function closeSkinMenu() {
-  skinDropdown.hidden = true;
+function closeSettings() {
+  settingsModal.hidden = true;
   if (activeSkinTrigger) activeSkinTrigger.setAttribute('aria-expanded', 'false');
   activeSkinTrigger = null;
 }
@@ -218,20 +211,19 @@ applySkin(localStorage.getItem(SKIN_KEY) || 'none');
 skinTriggers.forEach((btn) => {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (skinDropdown.hidden) openSkinMenu(btn);
-    else closeSkinMenu();
+    if (settingsModal.hidden) openSettings(btn);
+    else closeSettings();
   });
 });
-document.addEventListener('click', (e) => {
-  if (!skinDropdown.hidden && !e.target.closest('#skinDropdown')) closeSkinMenu();
-});
+document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
+document.getElementById('settingsBackdrop').addEventListener('click', closeSettings);
 
-// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로
+// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로 (설정 패널이 열려 있었다면 같이 닫음)
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     applySkin(BOSS_KEY_SKIN);
     track('skin_change', { skin: BOSS_KEY_SKIN, source: 'boss_key' });
-    closeSkinMenu();
+    closeSettings();
   }
 });
 
