@@ -149,6 +149,15 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
   시나리오(재시도 끝에 성공/계속 실패/재시도 대상 아닌 에러는 즉시 반환) 단위 테스트해서
   무한루프 없음 확인함.
 
+- **인기 검색어 티커 5위 리셋 버그 수정 + 첫 로딩 우선순위 개선(2026-08-21)** — 티커가
+  5위까지만 보이고 다시 1위로 돌아가던 버그: `TICKER_INTERVAL_MS`(3초)×5=15초가 자동 갱신
+  주기와 맞물려서, 순위가 안 바뀌었어도 `loadPopularTicker`가 매번 `tickerIndex`를 0으로
+  리셋했었음. 순위 목록 시그니처(`market:symbol` 나열)를 비교해서 실제로 바뀐 경우만
+  인덱스/타이머를 리셋하는 `applyTickerItems`로 교체. 또한 서버가 KIS 호출을 700ms 간격
+  전역 큐로 직렬화하는데, 초기 로드 때 지수/관심종목/티커(최대 8개 시세)가 동시에 큐를
+  다투면서 메인 콘텐츠가 늦게 뜨던 문제도 `refreshAll()` 헬퍼로 지수/관심종목을 먼저 큐에
+  태우고 티커는 그 뒤에 시작하도록 고침(새로고침 버튼/자동갱신/탭 복귀 전부 동일 적용).
+
 ### 안 되는 것 / 아직 안 한 것
 - 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고) — 유일하게 남은 큰 작업.
 
@@ -218,6 +227,15 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
 
 ## 다음에 할 일
 
+0. **종목 상세 페이지(캔들차트) — 작업 중, git stash로 보류됨(2026-08-21)** — 종목 카드를
+   클릭하면 별도 전체화면으로 캔들차트가 뜨는 기능. 서버(`server-example/server.js`의
+   `/api/chart`, 국내 `FHKST03010100`/해외 `HHDFS76240000`), `data.js`의 `getChart`+
+   `mockChartFor`, `index.html`의 `#detailView`, `style.css`의 `.detail-view`, `app.js`의
+   `openDetail`/`closeDetail`/`renderCandlestick`까지 구현은 끝났지만 **아직 실제 화면에서
+   테스트 못 함** — `git stash list`에 "상세페이지(캔들차트) 작업 중단 - 나중에 이어서"로
+   남아있음. 이어서 하려면 `git stash pop`으로 복원. (참고: 로컬에서 실 API로 테스트하려면
+   Claude in Chrome 확장이 연결돼 있어야 함 — 이번 세션엔 `list_connected_browsers`가
+   빈 목록이라 실제 브라우저 테스트를 못 했음.)
 1. **인기 검색어 Redis 데이터 초기화** — 개발/테스트하면서 넣은 삼성전자·SK하이닉스·애플
    데이터가 실사용 데이터와 섞여있음. 사용자가 "다음 최종 배포 때 초기화하자"고 해서
    보류 중 — Upstash 콘솔(Data Browser)에서 `popular:domestic`/`popular:overseas` 키
