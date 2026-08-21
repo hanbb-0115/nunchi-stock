@@ -793,16 +793,32 @@ const TICKER_INSTANCES = [
 
 const TICKER_CACHE_KEY = 'nunchi_cache_ticker_v1';
 
+// 마지막으로 반영한 순위 목록의 시그니처(순서 포함, market:symbol 나열) — 이게 그대로면
+// 순위가 안 바뀐 거니까 인덱스/타이머를 안 건드림. loadPopularTicker가 15초 자동 갱신마다
+// 다시 호출되는데, TICKER_INTERVAL_MS(3초)로 15초를 나누면 딱 5칸 넘어가는 시점에 매번
+// 인덱스가 0으로 리셋되면서 6위 이후로는 절대 못 보고 5위→1위로 되돌아가는 버그가 있었음
+// (2026-08-21 발견/수정). 실제로 순위가 바뀌었을 때만 리셋하도록 고침.
+let tickerSig = '';
+function tickerSignature(items) {
+  return items.map((it) => `${it.market}:${it.symbol}`).join(',');
+}
+function applyTickerItems(items) {
+  const sig = tickerSignature(items);
+  const changed = sig !== tickerSig;
+  tickerItems = items;
+  tickerSig = sig;
+  TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = items.length === 0; });
+  if (changed) tickerIndex = 0;
+  paintTickerSlide();
+  if (changed) restartTickerAutoAdvance();
+}
+
 async function loadPopularTicker() {
   // 인기 검색어 API(Upstash+KIS 마스터 검증) 응답도 기다리는 동안 티커가 비어있지
   // 않게, 지난번에 성공했던 순위를 먼저 보여줌
   const cachedRanked = readCardsCache(TICKER_CACHE_KEY);
   if (cachedRanked && cachedRanked.length > 0) {
-    tickerItems = cachedRanked;
-    tickerIndex = 0;
-    TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = false; });
-    paintTickerSlide();
-    restartTickerAutoAdvance();
+    applyTickerItems(cachedRanked);
   }
 
   const [domestic, overseas] = await Promise.all([
@@ -812,13 +828,12 @@ async function loadPopularTicker() {
   const ranked = [...domestic.map((it) => ({ ...it, market: 'domestic' })), ...overseas.map((it) => ({ ...it, market: 'overseas' }))]
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
-  tickerIndex = 0;
 
-  clearInterval(tickerTimer);
-  const hasItems = ranked.length > 0;
-  TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = !hasItems; });
-  if (!hasItems) {
+  if (ranked.length === 0) {
     tickerItems = [];
+    tickerSig = '';
+    clearInterval(tickerTimer);
+    TICKER_INSTANCES.forEach(({ tickerEl }) => { tickerEl.hidden = true; });
     return;
   }
   writeCardsCache(TICKER_CACHE_KEY, ranked);
@@ -826,12 +841,12 @@ async function loadPopularTicker() {
   // 순위/이름은 시세 없이 바로 보여줌 — 실전투자 키는 초당 호출 제한 때문에
   // 종목 10개 시세를 다 받으려면(캐시 없으면) 최대 몇 초 걸릴 수 있어서, 그동안
   // 티커가 빈 채로 떠 있지 않게 먼저 그리고 시세는 뒤이어 채워 넣음
-  tickerItems = ranked;
-  paintTickerSlide();
-  restartTickerAutoAdvance();
+  applyTickerItems(ranked);
 
-  // 클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음
-  tickerItems = await Promise.all(
+  // 클라이언트 캐시 덕분에 다른 화면에 이미 떠 있던 종목은 재요청 없이 즉시 붙음.
+  // 순위 자체는 안 바뀌었으니(시그니처 동일) applyTickerItems가 인덱스/타이머는
+  // 그대로 두고 화면만 갱신함
+  const withQuotes = await Promise.all(
     ranked.map(async (it) => {
       try {
         const q = await MarketData.getQuote(it.symbol, it.name, it.market, it.excd);
@@ -841,7 +856,7 @@ async function loadPopularTicker() {
       }
     })
   );
-  paintTickerSlide(); // 현재 보이는 항목 기준으로 다시 그려서 시세 반영
+  applyTickerItems(withQuotes);
 }
 
 function tickerQuoteHtml(it, priceClass, changeClassPrefix) {
@@ -974,15 +989,21 @@ enableDragReorder(document.getElementById('watchList'), getWatchlist, (items) =>
 document.getElementById('refreshBtn').addEventListener('click', async (e) => {
   e.currentTarget.classList.add('spin');
   MarketData.clearCache();
-  await Promise.all([loadDomestic(), loadGlobal(), renderWatchlist()]);
+  await refreshAll();
   setTimeout(() => e.currentTarget.classList.remove('spin'), 700);
 });
 
+// 지수/관심종목(메인 콘텐츠)을 먼저 불러오고, 타이틀바 티커(부가 요소)는 그 뒤에 시작함.
+// 서버가 KIS 호출을 전역 큐에서 700ms 간격으로 직렬화하다 보니, 다 같이 동시에 쏘면
+// 티커 시세(최대 8개)가 메인 콘텐츠보다 먼저 큐를 차지해서 첫 화면이 늦게 뜨는 문제가
+// 있었음(2026-08-21 발견/수정) — 메인 콘텐츠부터 큐를 선점하게 순서를 나눔.
+async function refreshAll() {
+  await Promise.all([loadDomestic(), loadGlobal(), renderWatchlist()]);
+  loadPopularTicker();
+}
+
 // ---------- 초기 로드 ----------
-loadDomestic();
-loadGlobal();
-renderWatchlist();
-loadPopularTicker();
+refreshAll();
 
 // ---------- 자동 갱신 ----------
 // 원래는 새로고침 버튼을 눌러야만 최신 시세가 반영됐음 — 서버 캐시 주기(15초)에
@@ -992,19 +1013,11 @@ loadPopularTicker();
 const AUTO_REFRESH_INTERVAL_MS = 15000;
 setInterval(() => {
   if (document.hidden) return;
-  loadDomestic();
-  loadGlobal();
-  renderWatchlist();
-  loadPopularTicker();
+  refreshAll();
 }, AUTO_REFRESH_INTERVAL_MS);
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    loadDomestic();
-    loadGlobal();
-    renderWatchlist();
-    loadPopularTicker();
-  }
+  if (!document.hidden) refreshAll();
 });
 
 // ---------- 서비스워커 등록 (PWA 설치 지원) ----------
