@@ -279,6 +279,28 @@ function renderCard(item) {
   `;
 }
 
+// 캐시된 카드가 없는 첫 로드(콜드스타트 등)일 때, 서버 응답 기다리는 동안 빈 화면
+// 대신 자리만 채워두는 스켈레톤 카드. .idx-card 구조를 그대로 써서 위장 모드별
+// 카드 스타일(배경/테두리 등)도 별도 작업 없이 그대로 적용됨.
+function skeletonCardHtml() {
+  return `
+    <div class="idx-card skel-card" aria-hidden="true">
+      <span class="drag-handle">⠿</span>
+      <div class="idx-info">
+        <span class="skel-bar skel-name"></span>
+        <span class="skel-bar skel-sub"></span>
+      </div>
+      <div class="idx-numbers">
+        <span class="skel-bar skel-price"></span>
+        <span class="skel-bar skel-change"></span>
+      </div>
+    </div>
+  `;
+}
+function renderSkeletonCards(grid, count) {
+  grid.innerHTML = Array.from({ length: Math.max(count, 1) }, skeletonCardHtml).join('');
+}
+
 // ---------- 가격 변동 시 숫자 롤링 애니메이션 (토스증권 스타일) ----------
 function animateNumber(el, from, to, duration = 500) {
   const start = performance.now();
@@ -447,6 +469,8 @@ async function loadDomestic() {
     grid.querySelectorAll('.card-star').forEach((btn) => {
       btn.addEventListener('click', () => toggleStar(btn));
     });
+  } else {
+    renderSkeletonCards(grid, order.length);
   }
 
   try {
@@ -531,6 +555,8 @@ async function loadGlobal() {
     grid.querySelectorAll('.card-star').forEach((btn) => {
       btn.addEventListener('click', () => toggleStar(btn));
     });
+  } else {
+    renderSkeletonCards(grid, order.length);
   }
 
   try {
@@ -622,6 +648,8 @@ async function renderWatchlist() {
     wrap.querySelectorAll('.card-star').forEach((btn) => {
       btn.addEventListener('click', () => toggleStar(btn));
     });
+  } else {
+    renderSkeletonCards(wrap, list.length);
   }
 
   const quotes = await Promise.all(
@@ -813,12 +841,23 @@ function applyTickerItems(items) {
   if (changed) restartTickerAutoAdvance();
 }
 
+// 캐시된 순위가 없는 첫 로드일 때, 응답 기다리는 동안 티커 자리를 빈 채로 두지
+// 않고 짧은 반짝이는 바로 채워둠 (실제 데이터가 오면 applyTickerItems가 덮어씀)
+function paintTickerSkeleton() {
+  TICKER_INSTANCES.forEach(({ tickerEl, slideEl }) => {
+    tickerEl.hidden = false;
+    slideEl.innerHTML = `<span class="skel-bar skel-ticker"></span>`;
+  });
+}
+
 async function loadPopularTicker() {
   // 인기 검색어 API(Upstash+KIS 마스터 검증) 응답도 기다리는 동안 티커가 비어있지
   // 않게, 지난번에 성공했던 순위를 먼저 보여줌
   const cachedRanked = readCardsCache(TICKER_CACHE_KEY);
   if (cachedRanked && cachedRanked.length > 0) {
     applyTickerItems(cachedRanked);
+  } else {
+    paintTickerSkeleton();
   }
 
   const [domestic, overseas] = await Promise.all([

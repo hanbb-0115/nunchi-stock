@@ -107,6 +107,13 @@ body{
 .titlebar-ticker .ticker-slide{color:rgba(255,255,255,0.92); font-size:12px;}
 .titlebar-ticker .ticker-slide .ticker-rank{color:#fff;}
 
+/* 티커 스켈레톤 — 인기 검색어 응답 기다리는 동안 빈 자리 대신 짧게 반짝이는 바 하나 */
+.skel-ticker{width:72px; height:11px;}
+.titlebar-ticker .skel-ticker{
+  background:linear-gradient(90deg, rgba(255,255,255,0.16) 25%, rgba(255,255,255,0.34) 37%, rgba(255,255,255,0.16) 63%);
+  background-size:400% 100%;
+}
+
 /* 티커 호버 시 펼쳐지는 1~10위 전체 목록 — 티커 알약 왼쪽 끝에 맞춰서 바로 밑에
    열리게 함(항상 같은 기준점이라 기본 화면/위장 모드 어디서든 위치가 일관됨).
    폭은 티커 알약 자체(129px 안팎)보다 넓게 고정해서 이름+가격이 안 눌리게 함 */
@@ -306,6 +313,27 @@ body.no-select{user-select:none;}
 .idx-change.up{color:var(--up); background:var(--up-bg);}
 .idx-change.down{color:var(--down); background:var(--down-bg);}
 .idx-change.flat{color:var(--text-dim); background:var(--bg-elev-2);}
+
+/* 스켈레톤 로딩 카드 — 서버 응답 기다리는 동안 빈 화면 대신 자리를 채워둠
+   (실제 .idx-card 구조를 그대로 재사용해서 위장 모드별 카드 스타일도 자동 적용됨) */
+@keyframes skel-shimmer{
+  0%{background-position:100% 50%;}
+  100%{background-position:0 50%;}
+}
+.skel-bar{
+  display:block; border-radius:6px;
+  background:linear-gradient(90deg, var(--bg-elev-2) 25%, var(--line) 37%, var(--bg-elev-2) 63%);
+  background-size:400% 100%;
+  animation:skel-shimmer 1.4s ease infinite;
+}
+.skel-card{pointer-events:none;}
+.skel-card .drag-handle{visibility:hidden;}
+.skel-card .idx-info{gap:6px;}
+.skel-card .skel-name{width:60px; height:13px;}
+.skel-card .skel-sub{width:42px; height:10px;}
+.skel-card .idx-numbers{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+.skel-card .skel-price{width:68px; height:16px;}
+.skel-card .skel-change{width:50px; height:12px; border-radius:6px;}
 
 .hint{font-size:11px; color:var(--text-faint); margin:12px 2px 0;}
 
