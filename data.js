@@ -96,11 +96,31 @@ async function withClientCache(key, fetcher) {
   return data;
 }
 
+// Render 무료 티어는 15분 유휴 후 슬립되고, 깨어나는 동안 502/503을 짧게 돌려줄 때가
+// 있어요. 그 타이밍에 걸리면 바로 에러로 보이니, 콜드스타트로 보이는 실패는 잠깐 대기 후
+// 자동으로 한 번 더 시도해요.
+async function fetchWithRetry(url, { retries = 2, retryDelayMs = 3000 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    let res;
+    try {
+      res = await fetch(url);
+    } catch (err) {
+      if (attempt >= retries) throw err;
+      await new Promise((r) => setTimeout(r, retryDelayMs));
+      continue;
+    }
+    if (res.ok || attempt >= retries || (res.status !== 502 && res.status !== 503)) {
+      return res;
+    }
+    await new Promise((r) => setTimeout(r, retryDelayMs));
+  }
+}
+
 const MarketData = {
   async getDomesticIndices() {
     if (USE_MOCK) return delay(MOCK_DOMESTIC);
     return withClientCache('domestic-indices', async () => {
-      const res = await fetch(`${PROXY_BASE_URL}/api/domestic-indices`);
+      const res = await fetchWithRetry(`${PROXY_BASE_URL}/api/domestic-indices`);
       if (!res.ok) throw new Error('국내 지수를 불러오지 못했어요');
       return await res.json();
     });
@@ -109,7 +129,7 @@ const MarketData = {
   async getGlobalIndices() {
     if (USE_MOCK) return delay(MOCK_GLOBAL);
     return withClientCache('global-indices', async () => {
-      const res = await fetch(`${PROXY_BASE_URL}/api/global-indices`);
+      const res = await fetchWithRetry(`${PROXY_BASE_URL}/api/global-indices`);
       if (!res.ok) throw new Error('해외 지수를 불러오지 못했어요');
       return await res.json();
     });

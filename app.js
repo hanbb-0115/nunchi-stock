@@ -495,7 +495,7 @@ async function loadDomestic() {
       btn.addEventListener('click', () => toggleStar(btn));
     });
   } catch (err) {
-    if (!cached) showStatus('국내 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
+    if (!cached) showStatus('서버를 깨우는 중이에요. 잠시 후 새로고침 버튼을 눌러주세요.');
   }
 }
 
@@ -580,7 +580,7 @@ async function loadGlobal() {
       btn.addEventListener('click', () => toggleStar(btn));
     });
   } catch (err) {
-    if (!cached) showStatus('해외 지수를 불러오지 못했어요. 프록시 서버가 실행 중인지 확인해주세요.');
+    if (!cached) showStatus('서버를 깨우는 중이에요. 잠시 후 새로고침 버튼을 눌러주세요.');
   }
 }
 

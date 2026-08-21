@@ -92,6 +92,9 @@ server-example/                              실 시세 연동용 프록시 서�
 
 프록시 서버(`server-example/`)는 별도로 배포해야 해요 (예: Vercel Serverless Function, Railway, Render 등). 배포 후 `data.js`의 fetch 경로를 배포된 서버 주소로 바꿔주세요.
 
+> Render 무료 티어는 유휴 시 슬립되고 깨어나는 동안 502/503을 짧게 돌려줄 수 있어요.
+> `data.js`의 `fetchWithRetry`가 이런 경우 자동으로 몇 초 간격으로 재시도해요.
+
 ## 3단계 — 앱인토스 미니앱으로 포팅하기 (선택)
 
 핵심 UI/데이터 로직(`data.js`, 화면 렌더링 로직)은 그대로 재사용 가능해요.
