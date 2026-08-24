@@ -530,6 +530,41 @@ app.get('/api/popular-searches', async (req, res) => {
   }
 });
 
+// ---------- 첫 렌더링 소요시간 기록 (콜드스타트/레이트리밋 개선 추이 모니터링용) ----------
+// 페이지 로드 시작부터 첫 실데이터(국내지수) 렌더링까지 걸린 시간을 클라이언트가 보내오면
+// Redis Sorted Set에 쌓아둠(score=timestamp라 시간순 정렬됨). 실전투자 키가 오래돼서
+// 레이트리밋이 완화되는지, Render 콜드스타트가 나아지는지를 시간에 따라 추적하려는 용도.
+const RENDER_TIMING_LIMIT = 500; // Upstash 무료 티어 용량 고려해 최근 500개만 보관
+
+app.post('/api/log-render-time', express.json(), async (req, res) => {
+  const ms = Number(req.body && req.body.ms);
+  if (!Number.isFinite(ms) || ms <= 0 || ms > 5 * 60 * 1000) {
+    return res.status(400).json({ error: 'ms 값이 올바르지 않아요' });
+  }
+  try {
+    const now = Date.now();
+    await redis('ZADD', 'render_timings', String(now), `${now}:${Math.round(ms)}`);
+    await redis('ZREMRANGEBYRANK', 'render_timings', '0', String(-RENDER_TIMING_LIMIT - 1));
+    res.json({ ok: true });
+  } catch (err) {
+    // 기록 실패해도 부가 기능이라 화면엔 영향 없음
+    res.status(500).json({ error: 'render timing 저장 실패', detail: String(err) });
+  }
+});
+
+app.get('/api/render-timings', async (req, res) => {
+  try {
+    const flat = await redis('ZRANGE', 'render_timings', '0', '-1');
+    const timings = flat.map((entry) => {
+      const [ts, ms] = entry.split(':');
+      return { ts: Number(ts), ms: Number(ms) };
+    });
+    res.json(timings);
+  } catch (err) {
+    res.status(500).json({ error: 'render timing 조회 실패', detail: String(err) });
+  }
+});
+
 // ---------- 환율 (해외 주식 원화 환산 표시용) ----------
 // KIS 시세 응답엔 환율 필드가 없어서, 별도 무료 API(Frankfurter, 키 불필요)로 조회.
 // 환율은 자주 안 바뀌니 기존 15초 캐시로도 충분함.

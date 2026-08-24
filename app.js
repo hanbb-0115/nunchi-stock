@@ -39,6 +39,16 @@ function track(name, params) {
   if (typeof gtag === 'function') gtag('event', name, params || {});
 }
 
+// 페이지 로드부터 첫 실데이터(국내지수) 렌더링까지 걸린 시간을 한 세션당 한 번만 기록.
+// performance.now()는 페이지 이동 시작 시점부터의 경과 시간이라, 이 시점에 호출하면
+// "콜드 오픈부터 화면에 실데이터가 뜨기까지" 걸린 시간이 그대로 나옴.
+let firstRenderTimingLogged = false;
+function logFirstRenderTiming() {
+  if (firstRenderTimingLogged) return;
+  firstRenderTimingLogged = true;
+  MarketData.logRenderTime(Math.round(performance.now()));
+}
+
 // ---------- 유틸 ----------
 // 종목명 등은 KIS 마스터 데이터에서 오지만, 만에 하나 이상한 값이 섞여도
 // innerHTML에 그대로 꽂히지 않도록 항상 이스케이프해서 씀 (방어적 조치)
@@ -801,6 +811,7 @@ async function loadDomestic() {
     });
     bindCardButtons(grid);
     checkPriceAlerts(quotes);
+    logFirstRenderTiming();
   } catch (err) {
     if (!cached) showStatus('서버를 깨우는 중이에요. 잠시 후 새로고침 버튼을 눌러주세요.');
   }

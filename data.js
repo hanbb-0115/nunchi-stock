@@ -171,6 +171,17 @@ const MarketData = {
     });
   },
 
+  // 페이지 로드부터 첫 실데이터 렌더링까지 걸린 시간을 기록 — 콜드스타트/레이트리밋이
+  // 시간이 지나면서 나아지는지 추적하려는 용도. 실패해도 조용히 무시(부가 기능)
+  logRenderTime(ms) {
+    if (USE_MOCK) return;
+    fetch(`${PROXY_BASE_URL}/api/log-render-time`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ms }),
+    }).catch(() => {});
+  },
+
   // 검색 결과를 클릭해서 카드로 추가할 때만 호출 — 실패해도 조용히 무시(부가 기능)
   trackSearch(market, symbol) {
     if (USE_MOCK) return;
