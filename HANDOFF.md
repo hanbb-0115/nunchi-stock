@@ -213,6 +213,26 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
   `parseTargetInput`으로 콤마를 다시 떼서 숫자로 변환하고, 기존 알림을 다시 열 때도
   `formatPrice`로 콤마 포맷해서 보여줌.
 
+- **첫 렌더링 소요시간 기록(2026-08-24)** — 페이지 로드부터 국내지수 첫 실데이터 렌더링까지
+  걸린 시간(ms)을 세션당 1번 서버로 보내서 Upstash Redis Sorted Set(`render_timings`,
+  score=timestamp)에 쌓음. 실전투자 키가 오래될수록 레이트리밋이 완화되는지, Render
+  콜드스타트가 나아지는지를 시간에 따라 추적하고 싶다는 요청으로 추가. 서버가 잠들어있다
+  처음 켰을 때의 느린 값과 이미 깨어있을 때의 빠른 값이 자연스럽게 섞여 쌓이므로, 날짜별
+  최댓값(그날의 첫 콜드 오픈)을 뽑아보면 추이를 볼 수 있음. `data.js`의
+  `MarketData.logRenderTime(ms)`(fire-and-forget) → `app.js`의 `logFirstRenderTiming()`
+  (`loadDomestic()` 성공 시 1회만 호출) → 서버 `POST /api/log-render-time`(기록) /
+  `GET /api/render-timings`(조회, 전체 반환). 최근 500개만 보관(`ZREMRANGEBYRANK`로 트림).
+
+- **위장 테마 하단 상태바가 화면 중간에 뜨던 버그(2026-08-24)** — 투명도 바를 추가하며
+  전체를 `#appContent`로 한 번 더 감쌌는데, 원래 `.panels`가 `flex:1`로 `.app`
+  (`min-height:100vh`)의 남는 높이를 직접 채워서 상태바를 화면 맨 아래로 밀어붙이던 구조가,
+  `#appContent` 자신은 안 늘어나는 바람에 깨졌었음(카드가 적어 콘텐츠가 짧으면 위장 테마
+  상태바가 화면 중간에 붕 뜸). `#appContent`에도 `flex:1`을 줘서 고침. 덧붙여 엑셀/워드/
+  PPT/카카오톡/아웃룩 상태바가 투명도 바 자리로 남겨둔 여백(40px)까지는 배경색을 안
+  채우고 있어서 상태바 밑에 빈 띠가 보이던 것도 같이 고침 — 패딩을 늘리고 그만큼 음수
+  `margin-bottom`으로 되당겨서, 차지하는 공간은 그대로 두고 배경색만 투명도 바 바로
+  위까지 이어지게 함.
+
 ### 안 되는 것 / 아직 안 한 것
 - 앱인토스 미니앱 포팅은 아직 시작 안 함 (계획만 있음, README 참고) — 유일하게 남은 큰 작업.
 
