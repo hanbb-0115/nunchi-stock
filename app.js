@@ -572,13 +572,27 @@ const alertSaveBtn = document.getElementById('alertSaveBtn');
 const alertDeleteBtn = document.getElementById('alertDeleteBtn');
 let alertContext = null; // { symbol, name, market, price } — 팝업이 열려있는 동안의 대상 종목
 
+// 목표가 입력창에 타이핑하는 동안 천단위 콤마를 넣어줌 — 소수점(해외 종목 센트 단위)은
+// 그대로 두고 정수 부분만 콤마로 묶음. 저장할 땐 parseTargetInput으로 콤마를 다시 뗌.
+function formatTargetInput() {
+  const raw = alertTargetInput.value.replace(/,/g, '');
+  const dotIndex = raw.indexOf('.');
+  const intPart = (dotIndex === -1 ? raw : raw.slice(0, dotIndex)).replace(/[^\d]/g, '');
+  const decPart = dotIndex === -1 ? '' : '.' + raw.slice(dotIndex + 1).replace(/[^\d]/g, '');
+  alertTargetInput.value = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decPart;
+}
+function parseTargetInput() {
+  return Number(alertTargetInput.value.replace(/,/g, ''));
+}
+alertTargetInput.addEventListener('input', formatTargetInput);
+
 function openAlertModal({ symbol, name, market, price }) {
   alertContext = { symbol, name, market, price };
   const unit = market === 'overseas' ? '달러' : '원';
   alertModalTitle.textContent = `${name} 가격 알림`;
   alertCurrentPrice.textContent = `현재가 ${formatPrice(price)}${unit}`;
   const existing = getPriceAlert(symbol);
-  alertTargetInput.value = existing ? existing.targetPrice : '';
+  alertTargetInput.value = existing ? formatPrice(existing.targetPrice) : '';
   alertDeleteBtn.hidden = !existing;
   alertModal.hidden = false;
   alertTargetInput.focus();
@@ -590,7 +604,7 @@ function closeAlertModal() {
 
 async function saveAlert() {
   if (!alertContext) return;
-  const target = Number(alertTargetInput.value);
+  const target = parseTargetInput();
   if (!target || target <= 0) {
     alertTargetInput.focus();
     return;
