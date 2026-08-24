@@ -52,8 +52,13 @@ body{
 /* 화면 투명도 설정 — 기본/위장 화면 콘텐츠 전체(제목표시줄 포함, 설정·알림 팝업·투명도
    바는 제외)를 감싸는 래퍼. opacity는 자손이 개별적으로 되돌릴 수 없는 속성이라, 조절
    바 자신은 반드시 이 래퍼 밖에 둬야 슬라이더 자체가 같이 옅어지는 걸 막을 수 있음.
-   하단에 고정된 투명도 바에 가려지지 않게 여유 패딩을 둠. */
-#appContent{display:flex; flex-direction:column; padding-bottom:40px; transition:opacity 200ms ease;}
+   하단에 고정된 투명도 바에 가려지지 않게 여유 패딩을 둠.
+   flex:1을 꼭 줘야 함 — 이 래퍼가 생기기 전엔 .panels(flex:1)가 .app(min-height:100vh)의
+   남는 공간을 직접 채워서 위장 테마 상태바가 항상 화면 맨 아래에 붙어있었는데, 이
+   래퍼로 한 단계 더 감싸면서 #appContent 자신이 안 늘어나면 .panels의 flex:1이 #appContent의
+   짧은 콘텐츠 높이 안에서만 작동해서 상태바가 화면 중간에 붕 뜨는 버그가 있었음
+   (2026-08-24 발견/수정) — #appContent도 같이 늘어나야 예전처럼 상태바가 바닥에 붙음. */
+#appContent{display:flex; flex-direction:column; flex:1; padding-bottom:40px; transition:opacity 200ms ease;}
 #appContent:hover, #appContent:focus-within{opacity:1 !important;}
 
 /* 화면 투명도 조절 바 — 카카오톡 PC 채팅방처럼 앱 하단에 항상 고정. #appContent 밖이라
@@ -622,9 +627,13 @@ body.no-select{user-select:none;}
 [data-skin="excel"] .panels{order:1;}
 [data-skin="excel"] .foot{display:none;}
 
+/* 상태바 배경을 #appContent의 하단 여백(투명도 바 자리, 40px)까지 색으로 채움 —
+   패딩만 늘리면 그만큼 빈 공간이 더 생기니, 음수 margin-bottom으로 늘어난 만큼
+   되당겨서 실제 차지하는 공간은 그대로 두고 배경색만 그 자리까지 이어지게 함
+   (안 그러면 상태바 밑에 배경색과 다른 빈 띠가 보임) */
 [data-skin="excel"] .xl-statusbar{
   order:3; display:flex; justify-content:space-between;
-  padding:4px 12px; font-size:11px; color:#fff;
+  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
   background:var(--accent);
 }
 
@@ -746,7 +755,7 @@ body.no-select{user-select:none;}
 
 [data-skin="word"] .wd-statusbar{
   display:flex; justify-content:space-between;
-  padding:4px 12px; font-size:11px; color:#fff;
+  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
   background:var(--accent);
 }
 
@@ -869,7 +878,7 @@ body.no-select{user-select:none;}
 
 [data-skin="ppt"] .pp-statusbar{
   display:flex; justify-content:space-between;
-  padding:4px 12px; font-size:11px; color:#fff;
+  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
   background:var(--accent);
 }
 
@@ -946,7 +955,7 @@ body.no-select{user-select:none;}
 
 [data-skin="kakao"] .kk-inputbar{
   display:flex; align-items:center; gap:8px;
-  padding:8px 12px; background:#fff; border-top:1px solid var(--line);
+  padding:8px 12px calc(8px + 40px); margin-bottom:-40px; background:#fff; border-top:1px solid var(--line);
 }
 .kk-inputbar-plus{
   width:26px; height:26px; border-radius:50%; background:var(--bg-elev-2);
@@ -1056,7 +1065,7 @@ body.no-select{user-select:none;}
 
 [data-skin="outlook"] .ol-statusbar{
   display:flex; justify-content:space-between;
-  padding:4px 12px; font-size:11px; color:#fff;
+  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
   background:var(--accent);
 }
 
