@@ -240,8 +240,42 @@
       </div>
 
       <div class="settings-section">
+        <h3 class="settings-section-title">해외 주식 통화 단위</h3>
+        <div id="settingsCurrencyToggle" class="settings-theme-toggle">
+          <button type="button" class="settings-currency-option" data-currency="usd">달러 ($)</button>
+          <button type="button" class="settings-currency-option" data-currency="krw">원화 (₩)</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h3 class="settings-section-title">화면 위장 테마</h3>
         <div id="settingsSkinList" class="settings-skin-list"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="settings-section-title">가격 알림 내역</h3>
+        <div id="alertHistoryList" class="alert-history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="alertModal" class="settings-modal" hidden>
+    <div id="alertBackdrop" class="settings-backdrop"></div>
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-label="가격 알림 설정">
+      <div class="settings-panel-header">
+        <span class="settings-panel-title" id="alertModalTitle">가격 알림</span>
+        <button id="alertCloseBtn" class="icon-btn" aria-label="닫기">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M6.4 4.98 12 10.59l5.6-5.6L19.02 6.4 13.42 12l5.6 5.6-1.41 1.41L12 13.41l-5.6 5.6-1.41-1.41L10.59 12 5 6.4z"/></svg>
+        </button>
+      </div>
+      <div class="settings-section">
+        <p class="alert-current-price" id="alertCurrentPrice"></p>
+        <input id="alertTargetInput" type="number" inputmode="decimal" class="alert-target-input" placeholder="목표가 입력">
+        <p class="hint">목표가에 도달하면 이 앱이 열려있는 동안 윈도우 알림을 보내드려요.</p>
+      </div>
+      <div class="settings-section alert-modal-actions">
+        <button id="alertDeleteBtn" class="btn-ghost" type="button" hidden>알림 삭제</button>
+        <button id="alertSaveBtn" class="btn-primary" type="button">알림 저장</button>
       </div>
     </div>
   </div>

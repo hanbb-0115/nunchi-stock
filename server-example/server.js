@@ -530,4 +530,23 @@ app.get('/api/popular-searches', async (req, res) => {
   }
 });
 
+// ---------- 환율 (해외 주식 원화 환산 표시용) ----------
+// KIS 시세 응답엔 환율 필드가 없어서, 별도 무료 API(Frankfurter, 키 불필요)로 조회.
+// 환율은 자주 안 바뀌니 기존 15초 캐시로도 충분함.
+app.get('/api/fx', async (req, res) => {
+  try {
+    const data = await withCache('fx:usdkrw', async () => {
+      const r = await fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=KRW');
+      if (!r.ok) throw new Error(`frankfurter ${r.status}`);
+      const json = await r.json();
+      const usdKrw = json.rates && json.rates.KRW;
+      if (typeof usdKrw !== 'number') throw new Error('환율 응답 형식 오류');
+      return { usdKrw };
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(502).json({ error: '환율 조회 실패', detail: String(err) });
+  }
+});
+
 app.listen(PORT, () => console.log(`KIS 프록시 서버 실행 중 (${KIS_ENV}) :${PORT}`));

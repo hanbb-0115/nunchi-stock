@@ -117,6 +117,52 @@ document.querySelectorAll('.settings-theme-option').forEach((btn) => {
   });
 });
 
+// ---------- 해외 주식 통화 단위 (달러 원본 표시 / 원화 환산 표시) ----------
+// 실제 시세 데이터(item.price 등)는 항상 원본 통화(해외=달러) 그대로 두고, 화면에
+// 찍을 때만 환산함 — 캐시나 알림 목표가 비교 로직이 환율 변동과 무관하게 항상
+// 원본 통화 기준으로 일관되게 동작하게 하기 위함
+const CURRENCY_UNIT_KEY = 'nunchi_currency_unit_v1';
+let fxRate = null; // { usdKrw } — '원화' 선택 시에만 필요해서 지연 로드
+
+function getCurrencyUnit() {
+  return localStorage.getItem(CURRENCY_UNIT_KEY) || 'usd';
+}
+function displayAmount(market, amount) {
+  if (market === 'overseas' && getCurrencyUnit() === 'krw' && fxRate) {
+    return { value: amount * fxRate.usdKrw, unit: '원' };
+  }
+  return { value: amount, unit: market === 'overseas' ? '달러' : '원' };
+}
+async function ensureFxRateLoaded() {
+  if (fxRate) return;
+  try {
+    fxRate = await MarketData.getFxRate();
+  } catch {
+    // 실패하면 달러 표시로 유지 — 다음 재시도는 다시 '원화'를 고를 때
+  }
+}
+
+async function applyCurrencyUnit(unit, { rerender = true } = {}) {
+  localStorage.setItem(CURRENCY_UNIT_KEY, unit);
+  document.querySelectorAll('.settings-currency-option').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.currency === unit);
+  });
+  if (unit === 'krw') await ensureFxRateLoaded();
+  if (rerender) {
+    loadGlobal();
+    renderWatchlist();
+  }
+}
+
+applyCurrencyUnit(getCurrencyUnit(), { rerender: false }); // 시작 시엔 버튼 표시만, 실제 렌더는 초기 로드가 처리
+
+document.querySelectorAll('.settings-currency-option').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    applyCurrencyUnit(btn.dataset.currency);
+    track('currency_unit_change', { unit: btn.dataset.currency });
+  });
+});
+
 // ---------- 설치 (PWA) ----------
 // 크로미움 계열(엣지/크롬)에서만 지원. 설치 가능한 상태일 때만 버튼이 나타남.
 let deferredInstallPrompt = null;
@@ -230,6 +276,7 @@ document.addEventListener('keydown', (e) => {
     applySkin(BOSS_KEY_SKIN);
     track('skin_change', { skin: BOSS_KEY_SKIN, source: 'boss_key' });
     closeSettings();
+    closeAlertModal();
   }
 });
 
@@ -252,6 +299,10 @@ document.querySelectorAll('.tab').forEach((btn) => {
 // ---------- 카드 렌더 (지수/개별종목 공통) ----------
 function renderCard(item) {
   const cls = changeClass(item.change);
+  const priceDisp = displayAmount(item.market, item.price);
+  const changeDisp = displayAmount(item.market, item.change);
+  const alert = item.starrable ? getPriceAlert(item.symbol) : null;
+  const alertTargetDisp = alert ? displayAmount(item.market, alert.targetPrice) : null;
   return `
     <div class="idx-card${item.removable ? ' has-remove' : ''}">
       <span class="drag-handle" aria-label="순서 변경">⠿</span>
@@ -260,19 +311,23 @@ function renderCard(item) {
           ? `<button class="card-star${item.starred ? ' starred' : ''}"
               data-symbol="${escapeHtml(item.symbol)}" data-name="${escapeHtml(item.name)}"
               data-market="${escapeHtml(item.market || '')}" data-excd="${escapeHtml(item.excd || '')}" data-label="${escapeHtml(item.label || '')}"
-              aria-label="관심종목 ${item.starred ? '삭제' : '추가'}">${item.starred ? '★' : '☆'}</button>`
+              aria-label="관심종목 ${item.starred ? '삭제' : '추가'}">${item.starred ? '★' : '☆'}</button>
+            <button class="card-alert${alert ? ' alert-active' : ''}"
+              data-symbol="${escapeHtml(item.symbol)}" data-name="${escapeHtml(item.name)}"
+              data-market="${escapeHtml(item.market || '')}" data-price="${item.price}"
+              aria-label="가격 알림 설정">🔔</button>`
           : ''
       }
       ${item.removable ? `<button class="card-remove" data-symbol="${escapeHtml(item.symbol)}" aria-label="삭제">✕</button>` : ''}
       <div class="idx-info">
         <span class="idx-name">${escapeHtml(item.name)}</span>
-        <span class="idx-sub">${escapeHtml(item.sub || '')}${item.failed ? ' · 조회 실패' : ''}</span>
+        <span class="idx-sub">${escapeHtml(item.sub || '')}${item.failed ? ' · 조회 실패' : ''}${alertTargetDisp ? ` · 목표가 ${formatPrice(alertTargetDisp.value)}${alertTargetDisp.unit}` : ''}</span>
       </div>
       <div class="idx-spark">${sparklineSvg(item.trend, cls)}</div>
       <div class="idx-numbers">
-        <div class="idx-price"><span class="idx-price-value" data-anim-key="${escapeHtml(String(item.id || item.symbol || ''))}" data-raw-price="${item.price}">${formatPrice(item.price)}</span><span class="idx-unit">${item.market === 'overseas' ? '달러' : '원'}</span></div>
+        <div class="idx-price"><span class="idx-price-value" data-anim-key="${escapeHtml(String(item.id || item.symbol || ''))}" data-raw-price="${priceDisp.value}">${formatPrice(priceDisp.value)}</span><span class="idx-unit">${priceDisp.unit}</span></div>
         <div class="idx-change ${cls}">
-          ${changeSign(item.change)}${formatPrice(item.change)} (${changeSign(item.changePct)}${item.changePct.toFixed(2)}%)
+          ${changeSign(item.change)}${formatPrice(changeDisp.value)} (${changeSign(item.changePct)}${item.changePct.toFixed(2)}%)
         </div>
       </div>
     </div>
@@ -376,6 +431,192 @@ function showStatus(message) {
   bar.hidden = false;
 }
 
+// ---------- 가격 알림 (목표가 도달 시 윈도우 알림, 개별 종목만) ----------
+// 종목당 알림 1개. "이상/이하"는 따로 안 고르고, 설정 시점 현재가보다 목표가가
+// 높으면 올라서 도달, 낮으면 떨어져서 도달로 자동 판단함. 도달하면 1회 알림 후
+// 자동 해제(스팸 방지) — 앱이 열려있을 때만 동작함(백그라운드 푸시 아님).
+const PRICE_ALERTS_KEY = 'nunchi_price_alerts_v1';
+const ALERT_HISTORY_KEY = 'nunchi_alert_history_v1';
+const ALERT_HISTORY_LIMIT = 20;
+
+function getPriceAlerts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PRICE_ALERTS_KEY));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch {
+    return {};
+  }
+}
+function savePriceAlerts(alerts) {
+  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
+}
+function getPriceAlert(symbol) {
+  return getPriceAlerts()[symbol] || null;
+}
+
+function getAlertHistory() {
+  return readList(ALERT_HISTORY_KEY, []);
+}
+function addAlertHistory(entry) {
+  writeList(ALERT_HISTORY_KEY, [entry, ...getAlertHistory()].slice(0, ALERT_HISTORY_LIMIT));
+  renderAlertHistory();
+}
+function renderAlertHistory() {
+  const wrap = document.getElementById('alertHistoryList');
+  const list = getAlertHistory();
+  if (list.length === 0) {
+    wrap.innerHTML = '<p class="alert-history-empty">아직 도달한 알림이 없어요.</p>';
+    return;
+  }
+  wrap.innerHTML = list
+    .map(
+      (h) => `
+        <div class="alert-history-row">
+          <span class="ah-name">${escapeHtml(h.name)}</span>
+          <span class="ah-detail">${escapeHtml(h.targetLabel)} 도달 (${formatPrice(h.reachedPrice)}${escapeHtml(h.unit)})</span>
+          <span class="ah-time">${escapeHtml(h.timeLabel)}</span>
+        </div>
+      `
+    )
+    .join('');
+}
+
+async function requestNotifyPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  return (await Notification.requestPermission()) === 'granted';
+}
+
+function fireAlertNotification(alert, reachedPrice) {
+  const unit = alert.market === 'overseas' ? '달러' : '원';
+  const targetLabel = `${formatPrice(alert.targetPrice)}${unit} ${alert.direction === 'above' ? '이상' : '이하'}`;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification('눈치주식 · 가격 알림', {
+        body: `${alert.name} ${formatPrice(reachedPrice)}${unit} 도달 (목표가 ${targetLabel})`,
+        tag: `nunchi-alert-${alert.symbol}`,
+      });
+    } catch {
+      // 알림 생성 실패해도(권한 철회 등) 히스토리 기록은 그대로 남김
+    }
+  }
+  addAlertHistory({ name: alert.name, targetLabel, reachedPrice, unit, timeLabel: nowLabel() });
+}
+
+// 카드에 이미 그려진 벨 아이콘의 활성화 색만 즉시 갱신 (별 아이콘 패턴과 동일 —
+// 알림이 막 도달해서 자동 해제됐을 때 전체 그리드를 다시 그리지 않고 반영)
+function refreshAlertButtonsUI() {
+  document.querySelectorAll('.card-alert[data-symbol]').forEach((btn) => {
+    btn.classList.toggle('alert-active', !!getPriceAlert(btn.dataset.symbol));
+  });
+}
+
+// loadDomestic/loadGlobal/renderWatchlist가 방금 받아온 시세들을 저장된 알림과 비교.
+// 실패한 시세(price:0, failed:true)는 건너뛰고, 도달한 알림은 1회 발동 후 삭제함.
+function checkPriceAlerts(quotes) {
+  const alerts = getPriceAlerts();
+  let changed = false;
+  quotes.forEach((q) => {
+    const alert = alerts[q.symbol];
+    if (!alert || q.failed || typeof q.price !== 'number') return;
+    const reached = alert.direction === 'above' ? q.price >= alert.targetPrice : q.price <= alert.targetPrice;
+    if (!reached) return;
+    fireAlertNotification(alert, q.price);
+    delete alerts[q.symbol];
+    changed = true;
+  });
+  if (changed) {
+    savePriceAlerts(alerts);
+    refreshAlertButtonsUI();
+  }
+}
+
+// ---------- 가격 알림 설정 팝업 ----------
+const alertModal = document.getElementById('alertModal');
+const alertModalTitle = document.getElementById('alertModalTitle');
+const alertCurrentPrice = document.getElementById('alertCurrentPrice');
+const alertTargetInput = document.getElementById('alertTargetInput');
+const alertSaveBtn = document.getElementById('alertSaveBtn');
+const alertDeleteBtn = document.getElementById('alertDeleteBtn');
+let alertContext = null; // { symbol, name, market, price } — 팝업이 열려있는 동안의 대상 종목
+
+function openAlertModal({ symbol, name, market, price }) {
+  alertContext = { symbol, name, market, price };
+  const unit = market === 'overseas' ? '달러' : '원';
+  alertModalTitle.textContent = `${name} 가격 알림`;
+  alertCurrentPrice.textContent = `현재가 ${formatPrice(price)}${unit}`;
+  const existing = getPriceAlert(symbol);
+  alertTargetInput.value = existing ? existing.targetPrice : '';
+  alertDeleteBtn.hidden = !existing;
+  alertModal.hidden = false;
+  alertTargetInput.focus();
+}
+function closeAlertModal() {
+  alertModal.hidden = true;
+  alertContext = null;
+}
+
+async function saveAlert() {
+  if (!alertContext) return;
+  const target = Number(alertTargetInput.value);
+  if (!target || target <= 0) {
+    alertTargetInput.focus();
+    return;
+  }
+  const granted = await requestNotifyPermission();
+  if (!granted) {
+    showStatus('브라우저 알림 권한이 필요해요. 주소창 옆 아이콘에서 알림을 허용해주세요.');
+    return;
+  }
+  const alerts = getPriceAlerts();
+  alerts[alertContext.symbol] = {
+    symbol: alertContext.symbol,
+    name: alertContext.name,
+    market: alertContext.market,
+    targetPrice: target,
+    direction: target >= alertContext.price ? 'above' : 'below',
+  };
+  savePriceAlerts(alerts);
+  refreshAlertButtonsUI();
+  track('price_alert_set', { market: alertContext.market });
+  closeAlertModal();
+}
+function deleteAlert() {
+  if (!alertContext) return;
+  const alerts = getPriceAlerts();
+  delete alerts[alertContext.symbol];
+  savePriceAlerts(alerts);
+  refreshAlertButtonsUI();
+  track('price_alert_delete', { market: alertContext.market });
+  closeAlertModal();
+}
+
+alertSaveBtn.addEventListener('click', saveAlert);
+alertDeleteBtn.addEventListener('click', deleteAlert);
+document.getElementById('alertCloseBtn').addEventListener('click', closeAlertModal);
+document.getElementById('alertBackdrop').addEventListener('click', closeAlertModal);
+
+// loadDomestic/loadGlobal/renderWatchlist 6곳에서 반복되던 .card-star 바인딩에
+// .card-alert(벨 아이콘) 바인딩을 같이 묶어서 한 번에 처리
+function bindCardButtons(container) {
+  container.querySelectorAll('.card-star').forEach((btn) => {
+    btn.addEventListener('click', () => toggleStar(btn));
+  });
+  container.querySelectorAll('.card-alert').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      openAlertModal({
+        symbol: btn.dataset.symbol,
+        name: btn.dataset.name,
+        market: btn.dataset.market,
+        price: Number(btn.dataset.price),
+      })
+    );
+  });
+}
+
+renderAlertHistory();
+
 // ---------- 드래그 정렬 (포인터 이벤트 기반, 마우스/터치 공용) ----------
 // container: 카드가 들어있는 grid 엘리먼트 (한 번만 연결, innerHTML이 바뀌어도 유지됨)
 // getItems: 현재 순서 배열을 반환하는 함수 (드래그 시작 시점에 호출)
@@ -466,9 +707,7 @@ async function loadDomestic() {
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeDomesticCard(btn.dataset.symbol));
     });
-    grid.querySelectorAll('.card-star').forEach((btn) => {
-      btn.addEventListener('click', () => toggleStar(btn));
-    });
+    bindCardButtons(grid);
   } else {
     renderSkeletonCards(grid, order.length);
   }
@@ -515,9 +754,8 @@ async function loadDomestic() {
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeDomesticCard(btn.dataset.symbol));
     });
-    grid.querySelectorAll('.card-star').forEach((btn) => {
-      btn.addEventListener('click', () => toggleStar(btn));
-    });
+    bindCardButtons(grid);
+    checkPriceAlerts(quotes);
   } catch (err) {
     if (!cached) showStatus('서버를 깨우는 중이에요. 잠시 후 새로고침 버튼을 눌러주세요.');
   }
@@ -552,9 +790,7 @@ async function loadGlobal() {
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeGlobalCard(btn.dataset.symbol));
     });
-    grid.querySelectorAll('.card-star').forEach((btn) => {
-      btn.addEventListener('click', () => toggleStar(btn));
-    });
+    bindCardButtons(grid);
   } else {
     renderSkeletonCards(grid, order.length);
   }
@@ -602,9 +838,8 @@ async function loadGlobal() {
     grid.querySelectorAll('.card-remove').forEach((btn) => {
       btn.addEventListener('click', () => removeGlobalCard(btn.dataset.symbol));
     });
-    grid.querySelectorAll('.card-star').forEach((btn) => {
-      btn.addEventListener('click', () => toggleStar(btn));
-    });
+    bindCardButtons(grid);
+    checkPriceAlerts(quotes);
   } catch (err) {
     if (!cached) showStatus('서버를 깨우는 중이에요. 잠시 후 새로고침 버튼을 눌러주세요.');
   }
@@ -645,9 +880,7 @@ async function renderWatchlist() {
   const cached = readCardsCache(WATCH_CARDS_CACHE_KEY);
   if (cached) {
     wrap.innerHTML = cached.map((q) => renderCard({ ...q, starrable: true, starred: true })).join('');
-    wrap.querySelectorAll('.card-star').forEach((btn) => {
-      btn.addEventListener('click', () => toggleStar(btn));
-    });
+    bindCardButtons(wrap);
   } else {
     renderSkeletonCards(wrap, list.length);
   }
@@ -670,9 +903,8 @@ async function renderWatchlist() {
   renderCardsWithAnimation(wrap, quotes.map((q) => ({ ...q, starrable: true, starred: true })));
   writeCardsCache(WATCH_CARDS_CACHE_KEY, quotes);
 
-  wrap.querySelectorAll('.card-star').forEach((btn) => {
-    btn.addEventListener('click', () => toggleStar(btn));
-  });
+  bindCardButtons(wrap);
+  checkPriceAlerts(quotes);
 }
 
 // ---------- 검색 (공통 헬퍼) ----------

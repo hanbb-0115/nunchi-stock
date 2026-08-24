@@ -192,6 +192,16 @@ const MarketData = {
     }
   },
 
+  // 해외 주식을 원화로 환산해서 보여주는 설정용 — USD/KRW 환율 하나만 받아옴
+  async getFxRate() {
+    if (USE_MOCK) return { usdKrw: 1380 };
+    return withClientCache('fx-usdkrw', async () => {
+      const res = await fetchWithRetry(`${PROXY_BASE_URL}/api/fx`);
+      if (!res.ok) throw new Error('환율을 불러오지 못했어요');
+      return await res.json();
+    });
+  },
+
   // 새로고침 버튼처럼 "진짜 최신값"이 필요할 때 캐시를 건너뛰기 위해 비움
   clearCache() {
     clientCache.clear();

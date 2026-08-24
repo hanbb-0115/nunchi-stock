@@ -186,13 +186,13 @@ body{
   text-transform:uppercase; letter-spacing:0.02em;
 }
 .settings-theme-toggle{display:flex; gap:8px;}
-.settings-theme-option{
+.settings-theme-option, .settings-currency-option{
   flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
   padding:10px 0; border:1px solid var(--line); border-radius:10px;
   background:var(--bg-elev-2); color:var(--text-dim); font-size:13px; font-weight:600;
   cursor:pointer;
 }
-.settings-theme-option.active{border-color:var(--accent); color:var(--accent);}
+.settings-theme-option.active, .settings-currency-option.active{border-color:var(--accent); color:var(--accent);}
 .settings-skin-list{display:flex; flex-direction:column; gap:2px;}
 .skin-option{
   display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -209,6 +209,38 @@ body{
   font-size:10px; color:var(--text-faint); background:var(--bg-elev-2);
   padding:2px 6px; border-radius:6px;
 }
+
+/* 가격 알림 설정 팝업 — #settingsModal과 같은 바텀시트 클래스(.settings-modal 등)를
+   그대로 재사용하고, 여기 있는 내용물만 추가로 정의함 */
+.alert-current-price{font-size:13px; color:var(--text-dim); margin:0 0 10px;}
+.alert-target-input{
+  width:100%; background:var(--bg-elev-2); border:1px solid var(--line);
+  color:var(--text); border-radius:10px; padding:11px 13px; font-size:15px;
+  font-family:var(--mono); outline:none; margin-bottom:8px;
+}
+.alert-target-input:focus{border-color:var(--accent);}
+.alert-modal-actions{display:flex; gap:8px;}
+.btn-ghost{
+  background:transparent; color:var(--text-dim); border:1px solid var(--line);
+  border-radius:10px; padding:0 16px; font-size:13px; font-weight:700;
+  cursor:pointer; flex:1;
+}
+.btn-ghost:active{background:var(--bg-elev-2);}
+.alert-modal-actions .btn-primary{flex:2;}
+
+/* 설정 패널의 "가격 알림 내역" 섹션 */
+.alert-history-list{display:flex; flex-direction:column; gap:2px; max-height:180px; overflow-y:auto;}
+.alert-history-row{
+  display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  padding:8px 10px; border-radius:8px; font-size:12.5px;
+}
+.alert-history-row .ah-name{font-weight:700; flex-shrink:0;}
+.alert-history-row .ah-detail{
+  color:var(--text-dim); flex:1; text-align:right;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.alert-history-row .ah-time{color:var(--text-faint); font-size:11px; flex-shrink:0;}
+.alert-history-empty{color:var(--text-faint); font-size:12.5px; padding:8px 10px;}
 
 .status-bar{
   margin:0 18px 8px; padding:8px 12px;
@@ -280,6 +312,14 @@ body{
 }
 .card-star.starred{color:#ffc94d;}
 .card-star:active{transform:scale(0.88);}
+.card-alert{
+  flex-shrink:0; width:22px; height:22px; margin-right:2px;
+  background:transparent; border:none; color:var(--text-faint);
+  font-size:14px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.card-alert.alert-active{color:var(--accent);}
+.card-alert:active{transform:scale(0.88);}
 body.no-select{user-select:none;}
 .idx-info{display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-width:0; overflow:hidden;}
 .idx-name{font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
