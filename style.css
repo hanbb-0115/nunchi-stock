@@ -49,11 +49,31 @@ body{
   padding-bottom:env(safe-area-inset-bottom);
 }
 
-/* 화면 투명도 설정 — 기본/위장 화면 콘텐츠 전체(제목표시줄 포함, 설정·알림 팝업은 제외)를
-   감싸는 래퍼. opacity는 자손이 개별적으로 되돌릴 수 없는 속성이라, 설정 패널만은 반드시
-   이 래퍼 밖에 둬야 슬라이더를 조절하는 패널 자체가 같이 옅어지는 걸 막을 수 있음 */
-#appContent{display:flex; flex-direction:column; transition:opacity 200ms ease;}
+/* 화면 투명도 설정 — 기본/위장 화면 콘텐츠 전체(제목표시줄 포함, 설정·알림 팝업·투명도
+   바는 제외)를 감싸는 래퍼. opacity는 자손이 개별적으로 되돌릴 수 없는 속성이라, 조절
+   바 자신은 반드시 이 래퍼 밖에 둬야 슬라이더 자체가 같이 옅어지는 걸 막을 수 있음.
+   하단에 고정된 투명도 바에 가려지지 않게 여유 패딩을 둠. */
+#appContent{display:flex; flex-direction:column; padding-bottom:40px; transition:opacity 200ms ease;}
 #appContent:hover, #appContent:focus-within{opacity:1 !important;}
+
+/* 화면 투명도 조절 바 — 카카오톡 PC 채팅방처럼 앱 하단에 항상 고정. #appContent 밖이라
+   화면이 옅어져도 슬라이더는 항상 또렷하게 보임 (.app과 같은 폭을 맞추려고 위장 테마별로
+   max-width를 아래에서 각각 맞춰줌) */
+#opacityBar{
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  max-width:480px; margin:0 auto;
+  display:flex; align-items:center; gap:8px;
+  padding:6px 14px calc(6px + env(safe-area-inset-bottom));
+  background:var(--bg-elev); border-top:1px solid var(--line);
+}
+.opacity-bar-label{font-size:11px; color:var(--text-faint); flex-shrink:0;}
+.opacity-bar-out{font-size:11px; color:var(--text-faint); min-width:30px; text-align:right; flex-shrink:0;}
+[data-skin="excel"] #opacityBar,
+[data-skin="word"] #opacityBar,
+[data-skin="ppt"] #opacityBar,
+[data-skin="kakao"] #opacityBar,
+[data-skin="outlook"] #opacityBar,
+[data-skin="chrome"] #opacityBar{max-width:640px;}
 
 /* Topbar */
 .topbar{

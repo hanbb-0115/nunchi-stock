@@ -118,13 +118,15 @@ document.querySelectorAll('.settings-theme-option').forEach((btn) => {
 });
 
 // ---------- 화면 투명도 (기본/위장 화면 전체 대상, 카카오톡 PC 채팅방 투명도 참고) ----------
-// #appContent(설정·알림 팝업은 제외한 나머지 전체)에 opacity를 걸어서 지나가면서 흘긋 봐도
-// 잘 안 읽히게 함. 마우스를 올리거나 입력 요소에 포커스가 가 있으면(검색창 타이핑 등)
-// 항상 또렷하게 보이도록 CSS에서 :hover/:focus-within에 !important로 되돌려둠.
+// #appContent(설정·알림 팝업, 이 조절 바 자신은 제외한 나머지 전체)에 opacity를 걸어서
+// 지나가면서 흘긋 봐도 잘 안 읽히게 함. 설정 패널 안이 아니라 카카오톡처럼 앱 하단에
+// 항상 붙어있는 얇은 바(#opacityBar)로 노출 — 마우스를 올리거나 입력 요소에 포커스가
+// 가 있으면(검색창 타이핑 등) 항상 또렷하게 보이도록 CSS에서 :hover/:focus-within에
+// !important로 되돌려둠.
 const APP_OPACITY_KEY = 'nunchi_app_opacity_v1';
 const appContentEl = document.getElementById('appContent');
-const opacityRangeEl = document.getElementById('settingsOpacityRange');
-const opacityOutEl = document.getElementById('settingsOpacityOut');
+const opacityRangeEl = document.getElementById('opacityRange');
+const opacityOutEl = document.getElementById('opacityOut');
 
 function applyAppOpacity(value) {
   localStorage.setItem(APP_OPACITY_KEY, String(value));

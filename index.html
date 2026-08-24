@@ -302,6 +302,15 @@
   </div>
   <!-- /#appContent -->
 
+  <!-- 화면 투명도 조절 바 — 카카오톡 PC 채팅방처럼 앱 하단에 항상 붙어있음.
+       #appContent 밖(항상 완전히 보임)에 둬서, 화면이 옅어져도 슬라이더 자체는
+       계속 또렷하게 조작할 수 있게 함. -->
+  <div id="opacityBar" aria-label="화면 투명도">
+    <span class="opacity-bar-label">투명도</span>
+    <input type="range" min="10" max="100" step="1" value="100" id="opacityRange" aria-label="화면 투명도">
+    <span id="opacityOut" class="opacity-bar-out">100%</span>
+  </div>
+
   <div id="settingsModal" class="settings-modal" hidden>
     <div id="settingsBackdrop" class="settings-backdrop"></div>
     <div class="settings-panel" role="dialog" aria-modal="true" aria-label="설정">
@@ -324,15 +333,6 @@
             다크
           </button>
         </div>
-      </div>
-
-      <div class="settings-section">
-        <h3 class="settings-section-title">화면 투명도</h3>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <input type="range" min="10" max="100" step="1" value="100" id="settingsOpacityRange" style="flex:1;" aria-label="화면 투명도">
-          <span id="settingsOpacityOut" style="font-size:13px; font-weight:600; min-width:34px; text-align:right;">100%</span>
-        </div>
-        <p class="hint" style="margin:6px 2px 0;">낮출수록 화면이 옅어져요 (기본·위장 화면 전부 적용, 마우스를 올리면 항상 또렷하게 보여요)</p>
       </div>
 
       <div class="settings-section">
