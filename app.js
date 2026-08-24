@@ -228,15 +228,17 @@ window.addEventListener('appinstalled', () => {
 
 // ---------- 설정 패널 (위장 테마 + 다크모드를 한 곳에 모음) ----------
 const SKIN_KEY = 'nunchi_skin_v1';
-// 새 테마를 추가할 땐 여기에 항목만 더하면 설정 목록에 자동으로 나타남 (CSS 구현은 별도)
+// 새 테마를 추가할 땐 여기에 항목만 더하면 설정 목록에 자동으로 나타남 (CSS 구현은 별도).
+// letter/color/fg는 설정 패널의 아이콘 칩 배지용 — 각 위장 테마 안의 로고 버튼(xlLogoBtn 등)과
+// 같은 브랜드 색을 재사용해서 새 아이콘을 따로 안 그려도 되게 함.
 const SKIN_OPTIONS = [
-  { id: 'none', label: '기본 화면' },
-  { id: 'excel', label: '엑셀' },
-  { id: 'word', label: '워드' },
-  { id: 'ppt', label: '파워포인트' },
-  { id: 'kakao', label: '카카오톡' },
-  { id: 'outlook', label: '아웃룩' },
-  { id: 'chrome', label: '크롬(뉴스)' },
+  { id: 'none', label: '기본 화면', letter: '눈', color: 'var(--accent)', fg: '#08110d' },
+  { id: 'excel', label: '엑셀', letter: 'X', color: '#217346', fg: '#fff' },
+  { id: 'word', label: '워드', letter: 'W', color: '#2b579a', fg: '#fff' },
+  { id: 'ppt', label: '파워포인트', letter: 'P', color: '#b7472a', fg: '#fff' },
+  { id: 'kakao', label: '카카오톡', letter: 'K', color: '#fee500', fg: '#3c1e1e' },
+  { id: 'outlook', label: '아웃룩', letter: 'O', color: '#0078d4', fg: '#fff' },
+  { id: 'chrome', label: '크롬(뉴스)', letter: 'N', color: '#03c75a', fg: '#fff' },
 ];
 const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
 
@@ -267,16 +269,23 @@ function applySkin(skin) {
   renderSkinList();
 }
 
+// 위장 테마가 6종으로 늘어나면서 세로 목록(7행)이 설정 패널을 너무 길게 만들어서,
+// 브랜드 색 배지(각 위장 테마 안의 로고 버튼과 같은 색) + 짧은 라벨의 아이콘 칩
+// 그리드(3열)로 바꿈 — 한눈에 훑어보기 쉽고 새 테마가 추가돼도 줄만 늘어남.
 function renderSkinList() {
   const current = document.documentElement.getAttribute('data-skin') || 'none';
   settingsSkinList.innerHTML = SKIN_OPTIONS.map((o) => `
-    <button class="skin-option${o.id === current ? ' selected' : ''}" data-skin="${o.id}" ${o.comingSoon ? 'disabled' : ''}>
-      <span>${o.label}</span>
-      ${o.comingSoon ? '<span class="skin-badge">준비중</span>' : '<span class="skin-check">✓</span>'}
+    <button class="skin-chip${o.id === current ? ' selected' : ''}${o.comingSoon ? ' coming-soon' : ''}" data-skin="${o.id}" ${o.comingSoon ? 'disabled' : ''} aria-label="${escapeHtml(o.label)}${o.comingSoon ? ' (준비중)' : ''}">
+      <span class="skin-chip-badge" style="background:${o.color}; color:${o.fg};">
+        ${escapeHtml(o.letter)}
+        ${o.id === current ? '<span class="skin-chip-check">✓</span>' : ''}
+      </span>
+      <span class="skin-chip-label">${escapeHtml(o.label)}</span>
+      ${o.comingSoon ? '<span class="skin-chip-badge-text">준비중</span>' : ''}
     </button>
   `).join('');
 
-  settingsSkinList.querySelectorAll('.skin-option:not([disabled])').forEach((btn) => {
+  settingsSkinList.querySelectorAll('.skin-chip:not([disabled])').forEach((btn) => {
     btn.addEventListener('click', () => {
       applySkin(btn.dataset.skin);
       track('skin_change', { skin: btn.dataset.skin, source: 'settings' });

@@ -242,21 +242,38 @@ input[type="range"]::-moz-range-track{
   cursor:pointer;
 }
 .settings-theme-option.active, .settings-currency-option.active{border-color:var(--accent); color:var(--accent);}
-.settings-skin-list{display:flex; flex-direction:column; gap:2px;}
-.skin-option{
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-  width:100%; padding:9px 10px; border:none; border-radius:8px;
-  background:transparent; color:var(--text); font-size:13px; text-align:left;
-  cursor:pointer;
+/* 위장 테마 선택 — 아이콘 칩 3열 그리드. 각 배지 색은 해당 위장 테마 안의 로고
+   버튼(xlLogoBtn 등)과 같은 브랜드 색을 재사용함 */
+.settings-skin-list{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+.skin-chip{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:10px 4px; border:1px solid var(--line); border-radius:12px;
+  background:transparent; cursor:pointer;
 }
-.skin-option:active{background:var(--bg-elev-2);}
-.skin-option.selected{color:var(--accent); font-weight:700;}
-.skin-option .skin-check{opacity:0; color:var(--accent);}
-.skin-option.selected .skin-check{opacity:1;}
-.skin-option[disabled]{color:var(--text-faint); cursor:default;}
-.skin-option .skin-badge{
-  font-size:10px; color:var(--text-faint); background:var(--bg-elev-2);
-  padding:2px 6px; border-radius:6px;
+.skin-chip.selected{background:var(--bg-elev-2); border-color:var(--accent);}
+.skin-chip:active{background:var(--bg-elev-2);}
+.skin-chip[disabled]{opacity:0.5; cursor:default;}
+.skin-chip-badge{
+  position:relative;
+  width:32px; height:32px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800; flex-shrink:0;
+}
+.skin-chip-check{
+  position:absolute; top:-4px; right:-4px;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--accent); color:#08110d;
+  font-size:9px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.skin-chip-label{
+  font-size:11px; font-weight:600; color:var(--text-dim);
+  text-align:center; line-height:1.2;
+}
+.skin-chip.selected .skin-chip-label{color:var(--text); font-weight:700;}
+.skin-chip-badge-text{
+  font-size:9px; color:var(--text-faint); background:var(--bg-elev-2);
+  padding:1px 5px; border-radius:6px;
 }
 
 /* 가격 알림 설정 팝업 — #settingsModal과 같은 바텀시트 클래스(.settings-modal 등)를
