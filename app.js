@@ -117,6 +117,31 @@ document.querySelectorAll('.settings-theme-option').forEach((btn) => {
   });
 });
 
+// ---------- 화면 투명도 (기본/위장 화면 전체 대상, 카카오톡 PC 채팅방 투명도 참고) ----------
+// #appContent(설정·알림 팝업은 제외한 나머지 전체)에 opacity를 걸어서 지나가면서 흘긋 봐도
+// 잘 안 읽히게 함. 마우스를 올리거나 입력 요소에 포커스가 가 있으면(검색창 타이핑 등)
+// 항상 또렷하게 보이도록 CSS에서 :hover/:focus-within에 !important로 되돌려둠.
+const APP_OPACITY_KEY = 'nunchi_app_opacity_v1';
+const appContentEl = document.getElementById('appContent');
+const opacityRangeEl = document.getElementById('settingsOpacityRange');
+const opacityOutEl = document.getElementById('settingsOpacityOut');
+
+function applyAppOpacity(value) {
+  localStorage.setItem(APP_OPACITY_KEY, String(value));
+  appContentEl.style.opacity = (value / 100).toFixed(2);
+  opacityOutEl.textContent = `${value}%`;
+  opacityRangeEl.value = String(value);
+}
+
+applyAppOpacity(Number(localStorage.getItem(APP_OPACITY_KEY)) || 100);
+
+opacityRangeEl.addEventListener('input', () => {
+  applyAppOpacity(Number(opacityRangeEl.value));
+});
+opacityRangeEl.addEventListener('change', () => {
+  track('app_opacity_change', { value: Number(opacityRangeEl.value) });
+});
+
 // ---------- 해외 주식 통화 단위 (달러 원본 표시 / 원화 환산 표시) ----------
 // 실제 시세 데이터(item.price 등)는 항상 원본 통화(해외=달러) 그대로 두고, 화면에
 // 찍을 때만 환산함 — 캐시나 알림 목표가 비교 로직이 환율 변동과 무관하게 항상
