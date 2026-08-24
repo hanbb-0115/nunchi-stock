@@ -320,6 +320,7 @@ body{
 }
 .card-alert.alert-active{color:var(--accent);}
 .card-alert:active{transform:scale(0.88);}
+.card-alert:disabled{opacity:0.35; cursor:default;}
 body.no-select{user-select:none;}
 .idx-info{display:flex; flex-direction:column; gap:3px; flex:1 1 auto; min-width:0; overflow:hidden;}
 .idx-name{font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}

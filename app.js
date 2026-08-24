@@ -312,9 +312,13 @@ function renderCard(item) {
               data-symbol="${escapeHtml(item.symbol)}" data-name="${escapeHtml(item.name)}"
               data-market="${escapeHtml(item.market || '')}" data-excd="${escapeHtml(item.excd || '')}" data-label="${escapeHtml(item.label || '')}"
               aria-label="관심종목 ${item.starred ? '삭제' : '추가'}">${item.starred ? '★' : '☆'}</button>
+            <!-- 시세 조회 실패 중(price:0)엔 벨을 비활성화함 — 그 상태로 알림을 걸면
+                 target>=0이라 항상 "이상 도달"로 잘못 판단되고, 다음 정상 시세가
+                 들어오자마자 의도치 않게 바로 발동해버릴 수 있음 -->
             <button class="card-alert${alert ? ' alert-active' : ''}"
               data-symbol="${escapeHtml(item.symbol)}" data-name="${escapeHtml(item.name)}"
               data-market="${escapeHtml(item.market || '')}" data-price="${item.price}"
+              ${item.failed ? 'disabled' : ''}
               aria-label="가격 알림 설정">🔔</button>`
           : ''
       }
