@@ -155,13 +155,16 @@ opacityRangeEl.addEventListener('change', () => {
 
 // 마우스 호버로 풀리게 했었는데, 커서가 화면 위에 가만히 얹혀만 있어도 계속 또렷하게
 // 보이는 게 문제였음 — 손을 안 치운 채로 상사가 지나가면 그 순간엔 안 가려짐. 스페이스바를
-// "누르고 있는 동안"만 보이는 방식으로 교체(눌렀다 떼면 다시 옅어짐). 검색창 등에 입력
-// 중일 땐 스페이스가 그 입력창의 공백 문자로 쓰여야 하니 가로채지 않음.
-function isTypingTarget(el) {
-  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+// "누르고 있는 동안"만 보이는 방식으로 교체(눌렀다 떼면 다시 옅어짐). 검색창 타이핑 중엔
+// 공백 문자로 쓰여야 하고, 버튼(탭/별/벨 아이콘 등)에 포커스가 가 있을 땐 스페이스가
+// 그 버튼을 눌러야 하니, 아무 것도 포커스돼 있지 않을 때(activeElement가 body)만
+// 리빌 단축키로 가로챔.
+function isFocusElsewhere() {
+  const el = document.activeElement;
+  return !!el && el !== document.body && el !== document.documentElement;
 }
 document.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || e.repeat || isTypingTarget(document.activeElement)) return;
+  if (e.code !== 'Space' || e.repeat || isFocusElsewhere()) return;
   e.preventDefault(); // 스페이스의 기본 동작(페이지 스크롤)을 막음
   appContentEl.classList.add('opacity-reveal');
 });
