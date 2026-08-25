@@ -261,7 +261,11 @@ const SKIN_OPTIONS = [
   { id: 'outlook', label: '아웃룩', letter: 'O', color: '#0078d4', fg: '#fff' },
   { id: 'chrome', label: '크롬(뉴스)', letter: 'N', color: '#03c75a', fg: '#fff' },
 ];
-const BOSS_KEY_SKIN = 'excel'; // Esc 눌렀을 때 전환할 위장 테마
+// Esc 눌렀을 때 전환할 위장 테마 — 설정 패널에서 사용자가 고를 수 있음 (기본값 엑셀)
+const BOSS_KEY_SKIN_KEY = 'nunchi_boss_key_skin_v1';
+function getBossKeySkin() {
+  return localStorage.getItem(BOSS_KEY_SKIN_KEY) || 'excel';
+}
 
 // 상단바(기본 화면)의 settingsBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
 // 같은 설정 패널을 연다 — 어느 화면이 보이든 항상 위장 테마/다크모드를 바꿀 수 있게.
@@ -276,6 +280,7 @@ const skinTriggers = [
 ];
 const settingsModal = document.getElementById('settingsModal');
 const settingsSkinList = document.getElementById('settingsSkinList');
+const settingsBossKeyList = document.getElementById('settingsBossKeyList');
 let activeSkinTrigger = null;
 
 function applySkin(skin) {
@@ -314,6 +319,34 @@ function renderSkinList() {
   });
 }
 
+// 보스키(Esc)로 전환될 위장 테마 선택 — '기본 화면'은 위장이 아니라서 목록에서 뺌.
+// 여기서 고르는 건 지금 화면을 바로 바꾸는 게 아니라 "다음에 Esc 누르면 어디로 갈지"
+// 설정만 저장하는 거라, renderSkinList와 달리 applySkin을 호출하지 않음.
+function renderBossKeyList() {
+  const current = getBossKeySkin();
+  settingsBossKeyList.innerHTML = SKIN_OPTIONS.filter((o) => o.id !== 'none')
+    .map(
+      (o) => `
+    <button class="skin-chip${o.id === current ? ' selected' : ''}" data-skin="${o.id}" aria-label="${escapeHtml(o.label)}">
+      <span class="skin-chip-badge" style="background:${o.color}; color:${o.fg};">
+        ${escapeHtml(o.letter)}
+        ${o.id === current ? '<span class="skin-chip-check">✓</span>' : ''}
+      </span>
+      <span class="skin-chip-label">${escapeHtml(o.label)}</span>
+    </button>
+  `
+    )
+    .join('');
+
+  settingsBossKeyList.querySelectorAll('.skin-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      localStorage.setItem(BOSS_KEY_SKIN_KEY, btn.dataset.skin);
+      renderBossKeyList();
+      track('boss_key_skin_change', { skin: btn.dataset.skin });
+    });
+  });
+}
+
 function openSettings(triggerEl) {
   activeSkinTrigger = triggerEl;
   settingsModal.hidden = false;
@@ -326,6 +359,7 @@ function closeSettings() {
 }
 
 applySkin(localStorage.getItem(SKIN_KEY) || 'none');
+renderBossKeyList();
 
 skinTriggers.forEach((btn) => {
   btn.addEventListener('click', (e) => {
@@ -340,8 +374,9 @@ document.getElementById('settingsBackdrop').addEventListener('click', closeSetti
 // Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로 (설정 패널이 열려 있었다면 같이 닫음)
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    applySkin(BOSS_KEY_SKIN);
-    track('skin_change', { skin: BOSS_KEY_SKIN, source: 'boss_key' });
+    const bossSkin = getBossKeySkin();
+    applySkin(bossSkin);
+    track('skin_change', { skin: bossSkin, source: 'boss_key' });
     closeSettings();
     closeAlertModal();
   }
