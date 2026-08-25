@@ -283,7 +283,7 @@ const skinTriggers = [
 ];
 const settingsModal = document.getElementById('settingsModal');
 const settingsSkinList = document.getElementById('settingsSkinList');
-const settingsBossKeyList = document.getElementById('settingsBossKeyList');
+const bossKeySelect = document.getElementById('bossKeySelect');
 let activeSkinTrigger = null;
 
 function applySkin(skin) {
@@ -323,32 +323,22 @@ function renderSkinList() {
 }
 
 // 보스키(Esc)로 전환될 위장 테마 선택 — '기본 화면'은 위장이 아니라서 목록에서 뺌.
+// 한 번 고르고 나면 자주 안 바꾸는 설정이라, 위장 테마 그리드와 달리 네이티브
+// 드롭다운으로 (매번 훑어보게 만드는 그리드보다 한 줄짜리 드롭다운이 더 적합함).
 // 여기서 고르는 건 지금 화면을 바로 바꾸는 게 아니라 "다음에 Esc 누르면 어디로 갈지"
-// 설정만 저장하는 거라, renderSkinList와 달리 applySkin을 호출하지 않음.
+// 설정만 저장하는 거라, applySkin을 호출하지 않음.
 function renderBossKeyList() {
   const current = getBossKeySkin();
-  settingsBossKeyList.innerHTML = SKIN_OPTIONS.filter((o) => o.id !== 'none')
+  bossKeySelect.innerHTML = SKIN_OPTIONS.filter((o) => o.id !== 'none')
     .map(
-      (o) => `
-    <button class="skin-chip${o.id === current ? ' selected' : ''}" data-skin="${o.id}" aria-label="${escapeHtml(o.label)}">
-      <span class="skin-chip-badge" style="background:${o.color}; color:${o.fg};">
-        ${escapeHtml(o.letter)}
-        ${o.id === current ? '<span class="skin-chip-check">✓</span>' : ''}
-      </span>
-      <span class="skin-chip-label">${escapeHtml(o.label)}</span>
-    </button>
-  `
+      (o) => `<option value="${o.id}"${o.id === current ? ' selected' : ''}>${escapeHtml(o.letter)} · ${escapeHtml(o.label)}</option>`
     )
     .join('');
-
-  settingsBossKeyList.querySelectorAll('.skin-chip').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      localStorage.setItem(BOSS_KEY_SKIN_KEY, btn.dataset.skin);
-      renderBossKeyList();
-      track('boss_key_skin_change', { skin: btn.dataset.skin });
-    });
-  });
 }
+bossKeySelect.addEventListener('change', () => {
+  localStorage.setItem(BOSS_KEY_SKIN_KEY, bossKeySelect.value);
+  track('boss_key_skin_change', { skin: bossKeySelect.value });
+});
 
 function openSettings(triggerEl) {
   activeSkinTrigger = triggerEl;
