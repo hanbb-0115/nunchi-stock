@@ -130,9 +130,8 @@ document.querySelectorAll('.settings-theme-option').forEach((btn) => {
 // ---------- 화면 투명도 (기본/위장 화면 전체 대상, 카카오톡 PC 채팅방 투명도 참고) ----------
 // #appContent(설정·알림 팝업, 이 조절 바 자신은 제외한 나머지 전체)에 opacity를 걸어서
 // 지나가면서 흘긋 봐도 잘 안 읽히게 함. 설정 패널 안이 아니라 카카오톡처럼 앱 하단에
-// 항상 붙어있는 얇은 바(#opacityBar)로 노출 — 마우스를 올리거나 입력 요소에 포커스가
-// 가 있으면(검색창 타이핑 등) 항상 또렷하게 보이도록 CSS에서 :hover/:focus-within에
-// !important로 되돌려둠.
+// 항상 붙어있는 얇은 바(#opacityBar)로 노출 — 입력 요소에 포커스가 가 있으면(검색창
+// 타이핑 등) 항상 또렷하게 보이도록 CSS에서 :focus-within에 !important로 되돌려둠.
 const APP_OPACITY_KEY = 'nunchi_app_opacity_v1';
 const appContentEl = document.getElementById('appContent');
 const opacityRangeEl = document.getElementById('opacityRange');
@@ -152,6 +151,28 @@ opacityRangeEl.addEventListener('input', () => {
 });
 opacityRangeEl.addEventListener('change', () => {
   track('app_opacity_change', { value: Number(opacityRangeEl.value) });
+});
+
+// 마우스 호버로 풀리게 했었는데, 커서가 화면 위에 가만히 얹혀만 있어도 계속 또렷하게
+// 보이는 게 문제였음 — 손을 안 치운 채로 상사가 지나가면 그 순간엔 안 가려짐. 스페이스바를
+// "누르고 있는 동안"만 보이는 방식으로 교체(눌렀다 떼면 다시 옅어짐). 검색창 등에 입력
+// 중일 땐 스페이스가 그 입력창의 공백 문자로 쓰여야 하니 가로채지 않음.
+function isTypingTarget(el) {
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+}
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat || isTypingTarget(document.activeElement)) return;
+  e.preventDefault(); // 스페이스의 기본 동작(페이지 스크롤)을 막음
+  appContentEl.classList.add('opacity-reveal');
+});
+document.addEventListener('keyup', (e) => {
+  if (e.code !== 'Space') return;
+  appContentEl.classList.remove('opacity-reveal');
+});
+// 스페이스를 누른 채로 창 포커스를 잃으면(알트탭 등) keyup을 못 받을 수 있어서, 포커스가
+// 빠져나가면 안전하게 다시 옅어지게 함
+window.addEventListener('blur', () => {
+  appContentEl.classList.remove('opacity-reveal');
 });
 
 // ---------- 해외 주식 통화 단위 (달러 원본 표시 / 원화 환산 표시) ----------

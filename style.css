@@ -59,7 +59,11 @@ body{
    짧은 콘텐츠 높이 안에서만 작동해서 상태바가 화면 중간에 붕 뜨는 버그가 있었음
    (2026-08-24 발견/수정) — #appContent도 같이 늘어나야 예전처럼 상태바가 바닥에 붙음. */
 #appContent{display:flex; flex-direction:column; flex:1; padding-bottom:40px; transition:opacity 200ms ease;}
-#appContent:hover, #appContent:focus-within{opacity:1 !important;}
+/* 마우스 호버로 풀리게 했었는데, 커서가 그냥 얹혀만 있어도 계속 또렷하게 보이는 게
+   문제였음(마우스를 안 치운 채로 상사가 지나가면 그 순간엔 안 가려짐) — 스페이스바를
+   누르고 있는 동안만 보이는 방식으로 교체함(app.js). 입력창에 포커스가 가 있을 때는
+   타이핑한 내용을 봐야 하니 그대로 유지. */
+#appContent:focus-within, #appContent.opacity-reveal{opacity:1 !important;}
 
 /* 화면 투명도 조절 바 — 카카오톡 PC 채팅방처럼 앱 하단에 항상 고정. #appContent 밖이라
    화면이 옅어져도 슬라이더는 항상 또렷하게 보임 (.app과 같은 폭을 맞추려고 위장 테마별로
