@@ -194,6 +194,13 @@ async function withCache(key, fn) {
   }
 }
 
+// ---------- 상태 확인 (UptimeRobot 등 외부 핑 전용) ----------
+// KIS API나 Redis를 전혀 안 건드리는 가장 가벼운 응답 — 잠들지 않게 주기적으로
+// 찔러보는 용도로만 씀 (실험 중: 효과가 크지 않으면 핑 자체를 끊을 예정, 2026-08-26).
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true });
+});
+
 // ---------- 2) 국내 지수 (코스피/코스닥) ----------
 const DOMESTIC_INDEX_LIST = [
   { id: 'KOSPI', name: '코스피', sub: 'KOSPI', iscd: '0001' },
