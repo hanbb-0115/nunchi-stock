@@ -591,4 +591,31 @@ app.get('/api/fx', async (req, res) => {
   }
 });
 
+// ---------- 환율 계산기 (여러 나라 통화 지원) ----------
+// 위 /api/fx(달러→원화 고정)와 별개 엔드포인트로 둠 — 기존 해외 주식 통화 단위 기능이
+// /api/fx 응답 형식({usdKrw})에 의존하고 있어서, 그걸 건드리지 않고 새 기능만 추가함.
+// from/to는 화이트리스트로 제한해서 Frankfurter로 임의 값이 그대로 전달되지 않게 함.
+const FX_CALC_CURRENCIES = ['KRW', 'USD', 'JPY', 'EUR', 'CNY', 'GBP', 'HKD', 'SGD', 'THB', 'AUD', 'CAD', 'CHF', 'INR'];
+app.get('/api/fx/rate', async (req, res) => {
+  const from = String(req.query.from || '').toUpperCase();
+  const to = String(req.query.to || '').toUpperCase();
+  if (!FX_CALC_CURRENCIES.includes(from) || !FX_CALC_CURRENCIES.includes(to)) {
+    return res.status(400).json({ error: '지원하지 않는 통화예요' });
+  }
+  if (from === to) return res.json({ from, to, rate: 1 });
+  try {
+    const data = await withCache(`fx:${from}:${to}`, async () => {
+      const r = await fetch(`https://api.frankfurter.dev/v1/latest?from=${from}&to=${to}`);
+      if (!r.ok) throw new Error(`frankfurter ${r.status}`);
+      const json = await r.json();
+      const rate = json.rates && json.rates[to];
+      if (typeof rate !== 'number') throw new Error('환율 응답 형식 오류');
+      return { from, to, rate };
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(502).json({ error: '환율 조회 실패', detail: String(err) });
+  }
+});
+
 app.listen(PORT, () => console.log(`KIS 프록시 서버 실행 중 (${KIS_ENV}) :${PORT}`));

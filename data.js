@@ -213,6 +213,16 @@ const MarketData = {
     });
   },
 
+  // 환율 계산기용 — 나라 두 개를 자유롭게 골라서 환산 (위 getFxRate은 달러→원화 고정)
+  async getFxRateFor(from, to) {
+    if (USE_MOCK) return { from, to, rate: from === to ? 1 : 1 };
+    return withClientCache(`fx-rate:${from}:${to}`, async () => {
+      const res = await fetchWithRetry(`${PROXY_BASE_URL}/api/fx/rate?from=${from}&to=${to}`);
+      if (!res.ok) throw new Error('환율을 불러오지 못했어요');
+      return await res.json();
+    });
+  },
+
   // 새로고침 버튼처럼 "진짜 최신값"이 필요할 때 캐시를 건너뛰기 위해 비움
   clearCache() {
     clientCache.clear();

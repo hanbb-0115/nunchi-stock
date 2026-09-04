@@ -322,6 +322,13 @@ input[type="range"]::-moz-range-track{
 .alert-history-row .ah-time{color:var(--text-faint); font-size:11px; flex-shrink:0;}
 .alert-history-empty{color:var(--text-faint); font-size:12.5px; padding:8px 10px;}
 
+/* 환율 계산기 팝업 — #settingsModal과 같은 바텀시트 클래스를 재사용 */
+.fx-calc-row{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.fx-calc-result{
+  font-family:var(--mono); font-size:22px; font-weight:800;
+  text-align:center; margin:4px 0 6px;
+}
+
 .status-bar{
   margin:0 18px 8px; padding:8px 12px;
   background:var(--bg-elev); border:1px solid var(--line);

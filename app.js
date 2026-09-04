@@ -372,6 +372,7 @@ document.addEventListener('keydown', (e) => {
     track('skin_change', { skin: bossSkin, source: 'boss_key' });
     closeSettings();
     closeAlertModal();
+    closeFxCalc();
   }
 });
 
@@ -640,19 +641,19 @@ const alertSaveBtn = document.getElementById('alertSaveBtn');
 const alertDeleteBtn = document.getElementById('alertDeleteBtn');
 let alertContext = null; // { symbol, name, market, price } — 팝업이 열려있는 동안의 대상 종목
 
-// 목표가 입력창에 타이핑하는 동안 천단위 콤마를 넣어줌 — 소수점(해외 종목 센트 단위)은
-// 그대로 두고 정수 부분만 콤마로 묶음. 저장할 땐 parseTargetInput으로 콤마를 다시 뗌.
-function formatTargetInput() {
-  const raw = alertTargetInput.value.replace(/,/g, '');
+// 숫자 입력창에 타이핑하는 동안 천단위 콤마를 넣어줌 — 소수점(해외 종목 센트, 환율 등)은
+// 그대로 두고 정수 부분만 콤마로 묶음. 목표가 입력·환율 계산기 둘 다 이 헬퍼를 씀.
+function formatCommaInput(inputEl) {
+  const raw = inputEl.value.replace(/,/g, '');
   const dotIndex = raw.indexOf('.');
   const intPart = (dotIndex === -1 ? raw : raw.slice(0, dotIndex)).replace(/[^\d]/g, '');
   const decPart = dotIndex === -1 ? '' : '.' + raw.slice(dotIndex + 1).replace(/[^\d]/g, '');
-  alertTargetInput.value = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decPart;
+  inputEl.value = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decPart;
 }
-function parseTargetInput() {
-  return Number(alertTargetInput.value.replace(/,/g, ''));
+function parseCommaInput(inputEl) {
+  return Number(inputEl.value.replace(/,/g, ''));
 }
-alertTargetInput.addEventListener('input', formatTargetInput);
+alertTargetInput.addEventListener('input', () => formatCommaInput(alertTargetInput));
 
 function openAlertModal({ symbol, name, market, price }) {
   alertContext = { symbol, name, market, price };
@@ -672,7 +673,7 @@ function closeAlertModal() {
 
 async function saveAlert() {
   if (!alertContext) return;
-  const target = parseTargetInput();
+  const target = parseCommaInput(alertTargetInput);
   if (!target || target <= 0) {
     alertTargetInput.focus();
     return;
@@ -709,6 +710,89 @@ alertSaveBtn.addEventListener('click', saveAlert);
 alertDeleteBtn.addEventListener('click', deleteAlert);
 document.getElementById('alertCloseBtn').addEventListener('click', closeAlertModal);
 document.getElementById('alertBackdrop').addEventListener('click', closeAlertModal);
+
+// ---------- 환율 계산기 ----------
+// 서버가 Frankfurter로 지원하는 통화 중 한국 사용자에게 흔히 필요한 것만 추림
+// (서버 FX_CALC_CURRENCIES 화이트리스트와 반드시 같은 코드를 써야 함)
+const FX_CALC_CURRENCIES = [
+  { code: 'KRW', label: '원화 (KRW)' },
+  { code: 'USD', label: '달러 (USD)' },
+  { code: 'JPY', label: '엔화 (JPY)' },
+  { code: 'EUR', label: '유로 (EUR)' },
+  { code: 'CNY', label: '위안 (CNY)' },
+  { code: 'GBP', label: '파운드 (GBP)' },
+  { code: 'HKD', label: '홍콩달러 (HKD)' },
+  { code: 'SGD', label: '싱가포르달러 (SGD)' },
+  { code: 'THB', label: '바트 (THB)' },
+  { code: 'AUD', label: '호주달러 (AUD)' },
+  { code: 'CAD', label: '캐나다달러 (CAD)' },
+  { code: 'CHF', label: '스위스프랑 (CHF)' },
+  { code: 'INR', label: '루피 (INR)' },
+];
+
+const fxCalcModal = document.getElementById('fxCalcModal');
+const fxCalcAmount = document.getElementById('fxCalcAmount');
+const fxCalcFrom = document.getElementById('fxCalcFrom');
+const fxCalcTo = document.getElementById('fxCalcTo');
+const fxCalcResult = document.getElementById('fxCalcResult');
+const fxCalcRateInfo = document.getElementById('fxCalcRateInfo');
+
+function populateFxCalcSelects() {
+  const optionsHtml = FX_CALC_CURRENCIES.map((c) => `<option value="${c.code}">${escapeHtml(c.label)}</option>`).join('');
+  fxCalcFrom.innerHTML = optionsHtml;
+  fxCalcTo.innerHTML = optionsHtml;
+  fxCalcFrom.value = 'USD';
+  fxCalcTo.value = 'KRW';
+}
+populateFxCalcSelects();
+
+// 요청이 여러 번 겹칠 때(빠르게 통화를 바꾸는 경우) 먼저 보낸 느린 응답이 나중에 도착해서
+// 화면을 덮어쓰지 않게, 매 요청마다 순번을 매겨서 최신 요청의 결과만 반영함
+let fxCalcRequestId = 0;
+async function updateFxCalc() {
+  const from = fxCalcFrom.value;
+  const to = fxCalcTo.value;
+  const amount = parseCommaInput(fxCalcAmount) || 0;
+  const myRequestId = ++fxCalcRequestId;
+  fxCalcResult.textContent = '조회 중...';
+  fxCalcRateInfo.textContent = '';
+  try {
+    const data = await MarketData.getFxRateFor(from, to);
+    if (myRequestId !== fxCalcRequestId) return;
+    fxCalcResult.textContent = `${formatPrice(amount * data.rate)} ${to}`;
+    fxCalcRateInfo.textContent = `1 ${from} = ${formatPrice(data.rate)} ${to}`;
+  } catch (err) {
+    if (myRequestId !== fxCalcRequestId) return;
+    fxCalcResult.textContent = '환율을 불러오지 못했어요';
+  }
+}
+
+fxCalcAmount.addEventListener('input', () => {
+  formatCommaInput(fxCalcAmount);
+  updateFxCalc();
+});
+fxCalcFrom.addEventListener('change', updateFxCalc);
+fxCalcTo.addEventListener('change', updateFxCalc);
+document.getElementById('fxCalcSwap').addEventListener('click', () => {
+  const from = fxCalcFrom.value;
+  fxCalcFrom.value = fxCalcTo.value;
+  fxCalcTo.value = from;
+  updateFxCalc();
+});
+
+function openFxCalc() {
+  fxCalcModal.hidden = false;
+  updateFxCalc();
+}
+function closeFxCalc() {
+  fxCalcModal.hidden = true;
+}
+document.getElementById('fxCalcBtn').addEventListener('click', () => {
+  track('fx_calc_open', {});
+  openFxCalc();
+});
+document.getElementById('fxCalcCloseBtn').addEventListener('click', closeFxCalc);
+document.getElementById('fxCalcBackdrop').addEventListener('click', closeFxCalc);
 
 // loadDomestic/loadGlobal/renderWatchlist 6곳에서 반복되던 .card-star 바인딩에
 // .card-alert(벨 아이콘) 바인딩을 같이 묶어서 한 번에 처리
