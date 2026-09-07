@@ -715,19 +715,19 @@ document.getElementById('alertBackdrop').addEventListener('click', closeAlertMod
 // 서버가 Frankfurter로 지원하는 통화 중 한국 사용자에게 흔히 필요한 것만 추림
 // (서버 FX_CALC_CURRENCIES 화이트리스트와 반드시 같은 코드를 써야 함)
 const FX_CALC_CURRENCIES = [
-  { code: 'KRW', label: '원화 (KRW)' },
-  { code: 'USD', label: '달러 (USD)' },
-  { code: 'JPY', label: '엔화 (JPY)' },
-  { code: 'EUR', label: '유로 (EUR)' },
-  { code: 'CNY', label: '위안 (CNY)' },
-  { code: 'GBP', label: '파운드 (GBP)' },
-  { code: 'HKD', label: '홍콩달러 (HKD)' },
-  { code: 'SGD', label: '싱가포르달러 (SGD)' },
-  { code: 'THB', label: '바트 (THB)' },
-  { code: 'AUD', label: '호주달러 (AUD)' },
-  { code: 'CAD', label: '캐나다달러 (CAD)' },
-  { code: 'CHF', label: '스위스프랑 (CHF)' },
-  { code: 'INR', label: '루피 (INR)' },
+  { code: 'KRW', label: '원화 (KRW)', flag: '🇰🇷' },
+  { code: 'USD', label: '달러 (USD)', flag: '🇺🇸' },
+  { code: 'JPY', label: '엔화 (JPY)', flag: '🇯🇵' },
+  { code: 'EUR', label: '유로 (EUR)', flag: '🇪🇺' },
+  { code: 'CNY', label: '위안 (CNY)', flag: '🇨🇳' },
+  { code: 'GBP', label: '파운드 (GBP)', flag: '🇬🇧' },
+  { code: 'HKD', label: '홍콩달러 (HKD)', flag: '🇭🇰' },
+  { code: 'SGD', label: '싱가포르달러 (SGD)', flag: '🇸🇬' },
+  { code: 'THB', label: '바트 (THB)', flag: '🇹🇭' },
+  { code: 'AUD', label: '호주달러 (AUD)', flag: '🇦🇺' },
+  { code: 'CAD', label: '캐나다달러 (CAD)', flag: '🇨🇦' },
+  { code: 'CHF', label: '스위스프랑 (CHF)', flag: '🇨🇭' },
+  { code: 'INR', label: '루피 (INR)', flag: '🇮🇳' },
 ];
 
 const fxCalcModal = document.getElementById('fxCalcModal');
@@ -738,7 +738,7 @@ const fxCalcResult = document.getElementById('fxCalcResult');
 const fxCalcRateInfo = document.getElementById('fxCalcRateInfo');
 
 function populateFxCalcSelects() {
-  const optionsHtml = FX_CALC_CURRENCIES.map((c) => `<option value="${c.code}">${escapeHtml(c.label)}</option>`).join('');
+  const optionsHtml = FX_CALC_CURRENCIES.map((c) => `<option value="${c.code}">${c.flag} ${escapeHtml(c.label)}</option>`).join('');
   fxCalcFrom.innerHTML = optionsHtml;
   fxCalcTo.innerHTML = optionsHtml;
   fxCalcFrom.value = 'USD';
