@@ -74,7 +74,7 @@
   <!-- 엑셀 위장 모드용 가짜 UI (data-skin="excel"일 때만 CSS로 표시) -->
   <div class="xl-chrome" aria-hidden="true">
     <div class="xl-titlebar">
-      <button id="xlLogoBtn" class="xl-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">X</button>
+      <button id="xlLogoBtn" class="xl-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false">X</button>
       <span class="xl-filename">통합 문서1 - Excel</span>
       <div id="xlTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
         <div id="xlPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
@@ -106,7 +106,7 @@
   <!-- 워드 위장 모드용 가짜 UI (data-skin="word"일 때만 CSS로 표시) -->
   <div class="wd-chrome" aria-hidden="true">
     <div class="wd-titlebar">
-      <button id="wdLogoBtn" class="wd-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">W</button>
+      <button id="wdLogoBtn" class="wd-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false">W</button>
       <span class="wd-filename">문서1 - Word</span>
       <div id="wdTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
         <div id="wdPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
@@ -129,7 +129,7 @@
   <!-- 파워포인트 위장 모드용 가짜 UI (data-skin="ppt"일 때만 CSS로 표시) -->
   <div class="pp-chrome" aria-hidden="true">
     <div class="pp-titlebar">
-      <button id="ppLogoBtn" class="pp-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">P</button>
+      <button id="ppLogoBtn" class="pp-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false">P</button>
       <span class="pp-filename">프레젠테이션1 - PowerPoint</span>
       <div id="ppTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
         <div id="ppPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
@@ -154,7 +154,7 @@
   <!-- 카카오톡 위장 모드용 가짜 UI (data-skin="kakao"일 때만 CSS로 표시) -->
   <div class="kk-chrome" aria-hidden="true">
     <div class="kk-titlebar">
-      <button id="kkLogoBtn" class="kk-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false"></button>
+      <button id="kkLogoBtn" class="kk-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false"></button>
       <span class="kk-filename">업무 공지방</span>
       <div id="kkTickerWrap" class="ticker-wrap">
         <div id="kkPopularTicker" class="popular-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
@@ -169,7 +169,7 @@
   <!-- 아웃룩 위장 모드용 가짜 UI (data-skin="outlook"일 때만 CSS로 표시) -->
   <div class="ol-chrome" aria-hidden="true">
     <div class="ol-titlebar">
-      <button id="olLogoBtn" class="ol-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false">O</button>
+      <button id="olLogoBtn" class="ol-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false">O</button>
       <span class="ol-filename">받은 편지함 - Outlook</span>
       <div id="olTickerWrap" class="ticker-wrap titlebar-ticker-wrap">
         <div id="olPopularTicker" class="popular-ticker titlebar-ticker" role="button" tabindex="0" aria-label="인기 검색 순위, 눌러서 카드 추가" hidden>
@@ -192,7 +192,7 @@
   <div class="cr-chrome" aria-hidden="true">
     <div class="cr-tabstrip">
       <div class="cr-tab active">
-        <button id="crLogoBtn" class="cr-logo" aria-label="화면 위장 테마 선택" aria-haspopup="true" aria-expanded="false"></button>
+        <button id="crLogoBtn" class="cr-logo" aria-label="빠른 메뉴" aria-haspopup="true" aria-expanded="false"></button>
         <span class="cr-tab-title">네이버 : 뉴스</span>
         <span class="cr-tab-close">×</span>
       </div>
@@ -407,6 +407,24 @@
         <p class="hint" id="fxCalcRateInfo"></p>
       </div>
     </div>
+  </div>
+
+  <!-- 위장 테마 안의 작은 로고 버튼("빠른 메뉴")을 누르면 뜨는 팝오버 — 새로고침·환율계산기·
+       설정을 한 곳에 모아둠. 위장 화면마다 다른 가짜 UI를 새로 안 그려도, 앞으로 상단바에
+       기능이 추가될 때마다 이 메뉴에 줄만 추가하면 위장 테마에도 똑같이 반영됨. -->
+  <div id="skinActionMenu" class="skin-action-menu" hidden>
+    <button id="skinActionRefresh" class="skin-action-row" type="button">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 5V2L7 6l5 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-6 6c-3.31 0-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      <span>새로고침</span>
+    </button>
+    <button id="skinActionFxCalc" class="skin-action-row" type="button">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+      <span>환율 계산기</span>
+    </button>
+    <button id="skinActionSettings" class="skin-action-row" type="button">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.14 12.94a7.14 7.14 0 0 0 .06-.94 7.14 7.14 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7.3 7.3 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.14 7.14 0 0 0-.06.94c0 .32.02.63.06.94L2.83 14.5a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.39 1.04.71 1.62.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.58-.23 1.12-.55 1.62-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+      <span>설정</span>
+    </button>
   </div>
 
 </div>

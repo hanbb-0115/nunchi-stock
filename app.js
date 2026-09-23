@@ -354,25 +354,97 @@ function closeSettings() {
 applySkin(localStorage.getItem(SKIN_KEY) || 'none');
 renderBossKeyList();
 
-skinTriggers.forEach((btn) => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (settingsModal.hidden) openSettings(btn);
-    else closeSettings();
-  });
+// 기본 화면의 settingsBtn은 계속 설정 패널을 바로 엶 (아이콘 자리가 넉넉해서 안 바꿔도 됨)
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (settingsModal.hidden) openSettings(settingsBtn);
+  else closeSettings();
 });
 document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
 document.getElementById('settingsBackdrop').addEventListener('click', closeSettings);
 
-// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로 (설정 패널이 열려 있었다면 같이 닫음)
+// 위장 테마 안의 작은 로고 버튼("빠른 메뉴")은 설정으로 바로 가지 않고, 새로고침/환율계산기/
+// 설정을 모아둔 작은 팝오버를 엶 — 위장 화면 디자인을 안 건드리고도 상단바 기능을 전부
+// 쓸 수 있게 하려는 목적. 앞으로 상단바에 기능이 추가되면 이 메뉴에도 줄만 추가하면 됨.
+const skinActionMenu = document.getElementById('skinActionMenu');
+let skinActionMenuTrigger = null;
+
+function openSkinActionMenu(triggerBtn) {
+  skinActionMenuTrigger = triggerBtn;
+  skinActionMenu.hidden = false;
+  const rect = triggerBtn.getBoundingClientRect();
+  skinActionMenu.style.top = `${rect.bottom + 6}px`;
+  skinActionMenu.style.left = `${rect.left}px`;
+  // 티커 호버 패널과 같은 방식 — 뷰포트 오른쪽으로 넘치면 왼쪽으로 당겨서 보정
+  const menuRect = skinActionMenu.getBoundingClientRect();
+  const viewportWidth = document.documentElement.clientWidth;
+  if (menuRect.right > viewportWidth) {
+    skinActionMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
+  }
+  triggerBtn.setAttribute('aria-expanded', 'true');
+}
+function closeSkinActionMenu() {
+  if (skinActionMenuTrigger) skinActionMenuTrigger.setAttribute('aria-expanded', 'false');
+  skinActionMenu.hidden = true;
+  skinActionMenuTrigger = null;
+}
+
+const DISGUISE_LOGO_BTNS = [
+  document.getElementById('xlLogoBtn'),
+  document.getElementById('wdLogoBtn'),
+  document.getElementById('ppLogoBtn'),
+  document.getElementById('kkLogoBtn'),
+  document.getElementById('olLogoBtn'),
+  document.getElementById('crLogoBtn'),
+];
+DISGUISE_LOGO_BTNS.forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!skinActionMenu.hidden && skinActionMenuTrigger === btn) closeSkinActionMenu();
+    else openSkinActionMenu(btn);
+  });
+});
+document.addEventListener('click', (e) => {
+  if (!skinActionMenu.hidden && !skinActionMenu.contains(e.target)) closeSkinActionMenu();
+});
+
+document.getElementById('skinActionRefresh').addEventListener('click', () => {
+  closeSkinActionMenu();
+  document.getElementById('refreshBtn').click();
+});
+document.getElementById('skinActionFxCalc').addEventListener('click', () => {
+  closeSkinActionMenu();
+  track('fx_calc_open', { source: 'skin_menu' });
+  openFxCalc();
+});
+document.getElementById('skinActionSettings').addEventListener('click', () => {
+  const trigger = skinActionMenuTrigger;
+  closeSkinActionMenu();
+  openSettings(trigger);
+});
+
+// Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로, 이미 위장 중이면 원래 있던
+// 화면으로 되돌아감(양방향 토글). preEscSkin에 "Esc 누르기 직전 화면"을 기억해뒀다가
+// 되돌아갈 때 씀 — 새로고침하면 초기화되는 세션 한정 기억이라 localStorage엔 안 남김.
+let preEscSkin = null;
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const bossSkin = getBossKeySkin();
-    applySkin(bossSkin);
-    track('skin_change', { skin: bossSkin, source: 'boss_key' });
+    const current = document.documentElement.getAttribute('data-skin') || 'none';
+    if (current === bossSkin) {
+      const backTo = preEscSkin !== null ? preEscSkin : 'none';
+      applySkin(backTo);
+      track('skin_change', { skin: backTo, source: 'boss_key_back' });
+      preEscSkin = null;
+    } else {
+      preEscSkin = current;
+      applySkin(bossSkin);
+      track('skin_change', { skin: bossSkin, source: 'boss_key' });
+    }
     closeSettings();
     closeAlertModal();
     closeFxCalc();
+    closeSkinActionMenu();
   }
 });
 
@@ -1456,10 +1528,14 @@ enableDragReorder(document.getElementById('watchList'), getWatchlist, (items) =>
 
 // ---------- 새로고침 ----------
 document.getElementById('refreshBtn').addEventListener('click', async (e) => {
-  e.currentTarget.classList.add('spin');
+  // e.currentTarget은 이벤트 디스패치가 끝나면 null로 초기화되는데, await 이후
+  // setTimeout 콜백에서 그대로 쓰면 그 시점엔 이미 null이라 에러가 남 — 버튼 참조를
+  // 미리 변수에 담아둬서 회피 (스핀 아이콘이 안 멈추고 계속 도는 버그로 이어졌었음)
+  const btn = e.currentTarget;
+  btn.classList.add('spin');
   MarketData.clearCache();
   await refreshAll();
-  setTimeout(() => e.currentTarget.classList.remove('spin'), 700);
+  setTimeout(() => btn.classList.remove('spin'), 700);
 });
 
 // 지수/관심종목(메인 콘텐츠)을 먼저 불러오고, 타이틀바 티커(부가 요소)는 그 뒤에 시작함.
