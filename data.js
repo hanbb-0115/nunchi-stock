@@ -16,7 +16,9 @@
  * ============================================================
  */
 
-const USE_MOCK = false; // KIS App Key 발급받으면 false로 변경 (검색은 이미 실서버 연결되어 있음)
+// 기본은 항상 실 서버 연동. 로컬에서 KIS 프록시 없이(Node 미설치 등) 디자인/UI만 확인하고
+// 싶을 때는 URL에 ?mock=1을 붙이면 됨 — 배포본 동작엔 전혀 영향 없음(항상 false로 평가됨).
+const USE_MOCK = new URLSearchParams(location.search).get('mock') === '1';
 // 로컬에서 열었을 땐 로컬 프록시 서버(server-example, 3001 포트)를, 배포 환경에선 Render 서버를 바라봄
 const PROXY_BASE_URL =
   location.hostname === 'localhost' || location.hostname === '127.0.0.1'
