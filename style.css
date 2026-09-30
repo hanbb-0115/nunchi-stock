@@ -661,6 +661,11 @@ body.no-select{user-select:none;}
    ============================================================ */
 .wd-chrome, .wd-statusbar{display:none;}
 
+/* 2026-09-30: 엑셀과 같은 방향으로 재설계 — 기본 UI(상단바/탭)는 그대로 두고 배경·
+   포인트 컬러만. 워드는 "흰 문서 페이지가 회색 캔버스 위에 떠있는" 모습을 배경 디자인으로,
+   종목 카드는 문서에 삽입된 표의 행처럼 보이게 함(엑셀의 "병합된 행"과 같은 결).
+   리본/눈금자 등 나머지 가짜 UI 전용 CSS(.wd-titlebar 등)는 .wd-chrome이 항상 숨김
+   처리라 더 이상 렌더링 안 되는 죽은 코드로 남겨둠 — 6개 테마 정리 끝나면 치울 예정. */
 :root[data-skin="word"]{
   --bg:#e8e9eb;
   --bg-elev:#ffffff;
@@ -670,21 +675,26 @@ body.no-select{user-select:none;}
   --text-dim:#484644;
   --text-faint:#7a7a7a;
   --up:#c1272d;
-  --up-bg:transparent;
+  --up-bg:rgba(193,39,45,0.1);
   --down:#1461c7;
-  --down-bg:transparent;
+  --down-bg:rgba(20,97,199,0.1);
   --accent:#2b579a;   /* 워드 블루 */
-  --radius:0px;
-  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
 }
 
 [data-skin="word"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
-[data-skin="word"] .app{max-width:640px;}
 
-[data-skin="word"] .topbar{display:none;}
-[data-skin="word"] .status-bar{margin-top:0;}
-
-[data-skin="word"] .wd-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+/* 배경 = 문서 페이지(흰 종이가 회색 캔버스 위에 떠있는 느낌) */
+[data-skin="word"] .panels{
+  margin:14px 10px; padding:18px 16px; background:var(--bg-elev);
+  box-shadow:0 0 0 1px var(--line), 0 4px 14px rgba(0,0,0,0.12);
+}
+/* 종목 카드 = 문서에 삽입된 표(테이블)의 행처럼 — 줄무늬 배경 + 칸 경계선 */
+[data-skin="word"] .card-grid{gap:0; border:1px solid var(--line); border-radius:2px; overflow:hidden;}
+[data-skin="word"] .idx-card{
+  border-radius:0; border:none; border-bottom:1px solid var(--line);
+}
+[data-skin="word"] .idx-card:last-child{border-bottom:none;}
+[data-skin="word"] .idx-card:nth-child(even){background:var(--bg-elev-2);}
 
 .wd-titlebar{
   background:var(--accent); color:#fff;
@@ -733,50 +743,6 @@ body.no-select{user-select:none;}
   background-image:repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 12px);
   background-position:14px 0;
 }
-
-/* 본문 = 문서 페이지 — 흰 종이처럼 그림자 얹고 좌우 여백 확보 */
-[data-skin="word"] .panels{
-  padding:18px 22px; background:var(--bg-elev);
-  margin:14px 10px; box-shadow:0 0 0 1px var(--line), 0 4px 14px rgba(0,0,0,0.12);
-}
-[data-skin="word"] .search-row input{border-radius:0;}
-[data-skin="word"] .btn-primary{border-radius:0; background:var(--accent);}
-[data-skin="word"] .search-results{border-radius:0;}
-
-/* 카드 목록 = 문서에 삽입된 표(테이블)처럼 */
-[data-skin="word"] .card-grid{gap:0; border:1px solid var(--line);}
-[data-skin="word"] .idx-card{
-  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
-  border-radius:0; padding:10px 12px;
-}
-[data-skin="word"] .idx-card:last-child{border-bottom:none;}
-[data-skin="word"] .idx-card:nth-child(odd){background:var(--bg-elev-2);}
-[data-skin="word"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
-[data-skin="word"] .idx-name{font-weight:600; font-size:13px;}
-[data-skin="word"] .idx-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
-[data-skin="word"] .idx-spark{display:none;}
-
-/* 탭 = 문서 안 섹션 제목처럼 단순화 */
-[data-skin="word"] .tabs{
-  margin:0 0 10px; padding:0; gap:0; background:transparent; border-radius:0;
-  border-bottom:2px solid var(--accent);
-}
-[data-skin="word"] .tab{
-  border-radius:0; background:transparent; color:var(--text-faint);
-  font-size:15px; font-weight:700; padding:4px 0 8px; margin-right:18px; flex:none;
-}
-[data-skin="word"] .tab.active{color:var(--accent);}
-[data-skin="word"] .foot{display:none;}
-
-[data-skin="word"] .wd-statusbar{
-  display:flex; justify-content:space-between;
-  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
-  background:var(--accent);
-}
-
-/* 검색 미리보기도 표 톤으로 */
-[data-skin="word"] .search-result-row{border-bottom:1px solid var(--line);}
-[data-skin="word"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
 
 /* ============================================================
    위장 모드 — 파워포인트
