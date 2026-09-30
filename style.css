@@ -537,6 +537,15 @@ body.no-select{user-select:none;}
    ============================================================ */
 .xl-chrome, .xl-statusbar{display:none;}
 
+/* 2026-09-30: 리본/수식줄/시트탭 등 진짜 앱 전체를 흉내내던 버전에서, 기본 테마의 상단바/
+   탭/카드 구조는 그대로 두고 배경·포인트 컬러만 위장 테마별로 입히는 방식으로 되돌림
+   (사용자 요청) — 예전엔 "라이트모드랑 구분이 안 된다"는 이유로 반대로 갔던 적이 있는데,
+   이번엔 완벽한 위장보다 가벼운 톤 차이로 충분하다는 판단.
+   단, 엑셀만 "카카오톡 엑셀테마"를 레퍼런스로 절충안 추가(2026-09-30) — 배경에 시트
+   눈금선(행/열)을 깔고, 종목 카드는 그 위에 병합된 행처럼 보이게(각진 모서리 + 왼쪽
+   행 번호 거터). 리본/수식줄/시트탭 같은 나머지 가짜 UI는 여전히 안 씀.
+   아래 남아있는 리본 전용 CSS(.xl-titlebar 등)는 .xl-chrome이 항상 숨김 처리라 더 이상
+   렌더링되지 않는 죽은 CSS — 6개 테마 전부 정리되면 한 번에 치울 예정. */
 :root[data-skin="excel"]{
   --bg:#e9eaeb;
   --bg-elev:#ffffff;
@@ -546,22 +555,35 @@ body.no-select{user-select:none;}
   --text-dim:#484644;
   --text-faint:#7a7a7a;
   --up:#c1272d;       /* 엑셀 셀 안에서도 상승=빨강 관례 유지 */
-  --up-bg:transparent;
+  --up-bg:rgba(193,39,45,0.1);
   --down:#1461c7;
-  --down-bg:transparent;
+  --down-bg:rgba(20,97,199,0.1);
   --accent:#217346;   /* 엑셀 그린 */
-  --radius:0px;
-  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
 }
 
 [data-skin="excel"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
-[data-skin="excel"] .app{max-width:640px;}
 
-/* 브랜드바/새로고침/테마버튼은 숨기고 리본으로 대체 */
-[data-skin="excel"] .topbar{display:none;}
-[data-skin="excel"] .status-bar{margin-top:0;}
-
-[data-skin="excel"] .xl-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+/* 배경 = 시트 눈금선(행/열), 종목 카드 = 그 위에 병합된 행처럼 보이게. 상단바/탭/카드
+   안 콘텐츠(가격·등락 배지·스파크라인 등)는 기본 테마 그대로 둬서 리본 버전보다 훨씬 가벼움 */
+[data-skin="excel"] .panels{
+  padding-left:26px; position:relative; background:var(--bg-elev);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size:88px 22px;
+}
+[data-skin="excel"] .card-grid{gap:0; counter-reset:xlrow;}
+[data-skin="excel"] .idx-card{
+  counter-increment:xlrow;
+  border-radius:2px; border-color:var(--line);
+}
+[data-skin="excel"] .idx-card::before{
+  content:counter(xlrow);
+  position:absolute; left:-26px; top:0; bottom:0; width:26px;
+  background:var(--bg-elev-2); border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; color:var(--text-faint);
+}
 
 .xl-titlebar{
   background:var(--accent); color:#fff;
@@ -633,69 +655,6 @@ body.no-select{user-select:none;}
 }
 .xl-colheaders .xl-corner{width:26px; border-right:1px solid var(--line);}
 .xl-colheaders span:not(.xl-corner){flex:1; padding:3px 0; border-right:1px solid var(--line);}
-
-/* 본문 = 시트 영역 — 빈 공간까지 셀 눈금선이 이어지도록 배경에 그리드 패턴을 깔아둠 */
-[data-skin="excel"] .panels{
-  padding:0 0 0 26px; position:relative; background:var(--bg-elev);
-  background-image:
-    linear-gradient(to right, var(--line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-  background-size:88px 22px;
-}
-[data-skin="excel"] .search-row{margin:8px 8px 8px 0;}
-[data-skin="excel"] .search-row input{border-radius:0;}
-[data-skin="excel"] .btn-primary{border-radius:0; background:var(--accent);}
-[data-skin="excel"] .search-results{border-radius:0;}
-
-[data-skin="excel"] .card-grid{gap:0; counter-reset:xlrow;}
-[data-skin="excel"] .idx-card{
-  counter-increment:xlrow;
-  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
-  border-radius:0; padding:8px 10px 8px 8px; position:relative;
-}
-[data-skin="excel"] .idx-card.has-remove{padding-top:20px;}
-[data-skin="excel"] .idx-card::before{
-  content:counter(xlrow);
-  position:absolute; left:-26px; top:0; bottom:0; width:26px;
-  background:var(--bg-elev-2); border-right:1px solid var(--line); border-bottom:1px solid var(--line);
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; color:var(--text-faint);
-}
-[data-skin="excel"] .idx-card:first-child{outline:2px solid var(--accent); outline-offset:-2px;}
-[data-skin="excel"] .idx-card.card-dragging{border-color:var(--line); box-shadow:none;}
-[data-skin="excel"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
-[data-skin="excel"] .idx-name{font-weight:600; font-size:13px;}
-[data-skin="excel"] .drag-handle{color:var(--text-faint);}
-/* 셀 구분선처럼 보이도록 행 안에서도 열 경계에 세로선 */
-[data-skin="excel"] .idx-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
-[data-skin="excel"] .idx-spark{display:none;}
-
-/* 탭 = 시트 탭으로 하단 이동 */
-[data-skin="excel"] .tabs{
-  order:2; margin:0; padding:4px 4px 0; gap:2px;
-  background:var(--bg-elev-2); border-top:1px solid var(--line); border-radius:0;
-}
-[data-skin="excel"] .tab{
-  border-radius:4px 4px 0 0; background:var(--line); color:var(--text-faint);
-  font-size:11.5px; padding:6px 10px;
-}
-[data-skin="excel"] .tab.active{background:var(--bg-elev); color:var(--text); font-weight:700;}
-[data-skin="excel"] .panels{order:1;}
-[data-skin="excel"] .foot{display:none;}
-
-/* 상태바 배경을 #appContent의 하단 여백(투명도 바 자리, 40px)까지 색으로 채움 —
-   패딩만 늘리면 그만큼 빈 공간이 더 생기니, 음수 margin-bottom으로 늘어난 만큼
-   되당겨서 실제 차지하는 공간은 그대로 두고 배경색만 그 자리까지 이어지게 함
-   (안 그러면 상태바 밑에 배경색과 다른 빈 띠가 보임) */
-[data-skin="excel"] .xl-statusbar{
-  order:3; display:flex; justify-content:space-between;
-  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
-  background:var(--accent);
-}
-
-/* 검색 미리보기(실시간 시세)도 각진 셀 톤으로 */
-[data-skin="excel"] .search-result-row{border-bottom:1px solid var(--line);}
-[data-skin="excel"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
 
 /* ============================================================
    위장 모드 — 워드
