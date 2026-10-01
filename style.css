@@ -777,6 +777,9 @@ body.no-select{user-select:none;}
   background:var(--bg-elev); border-radius:4px;
   box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
   padding:16px;
+  /* 실제 슬라이드 비율(16:9) 느낌을 주는 최소 높이 — 카드가 적을 땐 이 비율대로,
+     카드가 많아서 내용이 더 길면 억지로 자르지 않고 자연스럽게 늘어남 */
+  aspect-ratio:16/9;
 }
 /* 종목 카드 = 슬라이드 위 콘텐츠 박스(플레이스홀더)처럼 */
 [data-skin="ppt"] .card-grid{gap:8px;}
