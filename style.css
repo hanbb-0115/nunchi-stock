@@ -772,21 +772,16 @@ body.no-select{user-select:none;}
 [data-skin="ppt"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
 
 /* 배경 = 슬라이드 한 장이 회색 작업영역 위에 떠있는 모습 */
-/* 처음엔 aspect-ratio(16:9)로 "너비 기준 최소 높이"를 줬는데, 카드 개수에 따라 박스
-   세로 크기가 계속 바뀌어서 슬라이드답지 않다는 피드백을 받음. 내부 스크롤로 높이를
-   아예 고정해보려고도 했으나, 이 앱 자체가 뷰포트 높이에 상한을 안 두고(.app은
-   min-height:100vh) 전체 페이지가 자연스럽게 늘어나는 구조라 고정 캡이 의미가 없었음.
-   결국 엑셀/워드와 같은 방식으로 정리: 두 테마는 배경 디자인이 .panels 전체(이미
-   #appContent의 flex:1로 화면 전체 높이를 채움)에 깔려서 카드 개수와 무관하게 항상
-   화면을 채우는데, PPT도 .panel.active에 flex:1을 줘서 똑같이 동작하게 함 — 카드가
-   적을 땐 화면을 꽉 채우고, 많아지면 슬라이드 안에서 자르지 않고 페이지 전체가
-   자연스럽게 길어짐(2026-10-01). */
-[data-skin="ppt"] .panels{padding:10px 16px 16px; display:flex; flex-direction:column;}
-[data-skin="ppt"] .panel.active{
+/* 처음엔 .panel.active(탭 패널)에만 슬라이드 디자인을 입혔는데(aspect-ratio → flex:1
+   두 번의 시도), 그러면 (1) 카드 개수에 따라 높이가 들쭉날쭉하거나 (2) 푸터가 슬라이드
+   박스 바깥(아래)에 떨어져서 "푸터까지 포함해서 디자인을 잡아달라"는 요청을 못 만족시킴.
+   엑셀/워드처럼 .panels 자체(이미 #appContent의 flex:1로 화면 전체를 채우고, 이제
+   footer도 .panels 안쪽 마지막 자식으로 옮겨져 있음)에 슬라이드 배경을 입히는 걸로
+   통일함 — 탭이 바뀌어도 하나의 슬라이드가 화면 전체(푸터 포함)를 채움(2026-10-01). */
+[data-skin="ppt"] .panels{
+  padding:10px 16px 16px; display:flex; flex-direction:column;
   background:var(--bg-elev); border-radius:4px;
   box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
-  padding:16px;
-  flex:1;
 }
 /* 종목 카드 = 슬라이드 위 콘텐츠 박스(플레이스홀더)처럼 */
 [data-skin="ppt"] .card-grid{gap:8px;}
