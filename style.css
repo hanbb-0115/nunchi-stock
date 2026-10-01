@@ -845,6 +845,11 @@ body.no-select{user-select:none;}
    ============================================================ */
 .kk-chrome, .kk-inputbar{display:none;}
 
+/* 2026-10-02: 엑셀/워드/PPT와 같은 방향으로 재설계 — 기본 UI(상단바/탭/카드 내용)는
+   그대로 두고 배경·포인트 컬러만. 배경은 카카오톡 채팅방 배경색, 종목 카드는 그 위에
+   흰 말풍선처럼 보이게 함. 타이틀바/공지/입력창 같은 나머지 가짜 채팅 UI 전용 CSS는
+   .kk-chrome이 항상 숨김 처리라 더 이상 렌더링 안 되는 죽은 코드로 남겨둠 — 6개 테마
+   전부 정리되면 한 번에 치울 예정. */
 :root[data-skin="kakao"]{
   --bg:#b2c7da;        /* 카카오톡 채팅창 배경 */
   --bg-elev:#ffffff;
@@ -854,17 +859,30 @@ body.no-select{user-select:none;}
   --text-dim:#4a4a4a;
   --text-faint:#6b6b6b;
   --up:#c1272d;
-  --up-bg:transparent;
+  --up-bg:rgba(193,39,45,0.1);
   --down:#1461c7;
-  --down-bg:transparent;
+  --down-bg:rgba(20,97,199,0.1);
   --accent:#3c1e1e;    /* 말풍선 위 텍스트용 — 카카오 노랑은 텍스트로 쓰면 잘 안 보여서 진한 브라운 사용 */
 }
 
-[data-skin="kakao"] .app{max-width:640px;}
-[data-skin="kakao"] .topbar{display:none;}
-[data-skin="kakao"] .status-bar{margin-top:0;}
-
-[data-skin="kakao"] .kk-chrome{display:block;}
+/* 배경 = 채팅방(파란빛 회색), 종목 카드 = 그 위에 흰 말풍선처럼 */
+[data-skin="kakao"] .panels{background:var(--bg); padding:10px 10px 8px;}
+[data-skin="kakao"] .search-row input{border-radius:20px;}
+[data-skin="kakao"] .btn-primary{
+  flex-shrink:0; width:40px; height:40px; padding:0; border-radius:50%;
+  background:#fee500; color:#3c1e1e; font-size:0; position:relative;
+}
+[data-skin="kakao"] .btn-primary::after{
+  content:'➤'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:15px; color:#3c1e1e;
+}
+[data-skin="kakao"] .card-grid{gap:10px;}
+[data-skin="kakao"] .idx-card{
+  border:none; border-radius:4px 16px 16px 16px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  max-width:92%;
+}
+[data-skin="kakao"] .search-result-row{border-bottom:1px solid var(--line);}
 
 .kk-titlebar{
   background:#fff; color:#1b1b1b;
@@ -884,34 +902,6 @@ body.no-select{user-select:none;}
   padding:6px 12px; border-bottom:1px solid var(--line);
 }
 
-/* 본문 = 채팅방 배경(파란빛 회색) 위에 흰 말풍선 카드 */
-[data-skin="kakao"] .panels{background:var(--bg); padding:10px 10px 8px;}
-[data-skin="kakao"] .search-row input{border-radius:20px;}
-[data-skin="kakao"] .btn-primary{
-  flex-shrink:0; width:40px; height:40px; padding:0; border-radius:50%;
-  background:#fee500; color:#3c1e1e; font-size:0; position:relative;
-}
-[data-skin="kakao"] .btn-primary::after{
-  content:'➤'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-size:15px; color:#3c1e1e;
-}
-
-[data-skin="kakao"] .card-grid{gap:10px;}
-[data-skin="kakao"] .idx-card{
-  border:none; border-radius:4px 16px 16px 16px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.2);
-  max-width:92%;
-}
-[data-skin="kakao"] .idx-spark{display:none;}
-[data-skin="kakao"] .idx-change{background:transparent !important; padding:1px 0;}
-
-[data-skin="kakao"] .tab.active{background:var(--bg-elev); color:var(--accent); font-weight:700;}
-[data-skin="kakao"] .foot{display:none;}
-
-[data-skin="kakao"] .kk-inputbar{
-  display:flex; align-items:center; gap:8px;
-  padding:8px 12px calc(8px + 40px); margin-bottom:-40px; background:#fff; border-top:1px solid var(--line);
-}
 .kk-inputbar-plus{
   width:26px; height:26px; border-radius:50%; background:var(--bg-elev-2);
   color:#4a4a4a; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
@@ -923,13 +913,16 @@ body.no-select{user-select:none;}
   width:26px; height:26px; border-radius:50%; background:#fee500; flex-shrink:0;
 }
 
-[data-skin="kakao"] .search-result-row{border-bottom:1px solid var(--line);}
-
 /* ============================================================
    위장 모드 — 아웃룩
    ============================================================ */
 .ol-chrome, .ol-statusbar{display:none;}
 
+/* 2026-10-02: 엑셀/워드/PPT/카카오톡과 같은 방향으로 재설계 — 기본 UI(상단바/탭/카드
+   내용)는 그대로 두고 배경·포인트 컬러만. 종목 카드는 메일함의 메일 목록 한 줄처럼
+   보이게 함(왼쪽 발신자 아바타 원 + 구분선). 리본/타이틀바 등 나머지 가짜 UI 전용
+   CSS는 .ol-chrome이 항상 숨김 처리라 죽은 코드로 남겨둠 — 6개 테마 전부 정리되면
+   한 번에 치울 예정. */
 :root[data-skin="outlook"]{
   --bg:#faf9f8;
   --bg-elev:#ffffff;
@@ -939,20 +932,35 @@ body.no-select{user-select:none;}
   --text-dim:#605e5c;
   --text-faint:#8a8886;
   --up:#c1272d;
-  --up-bg:transparent;
+  --up-bg:rgba(193,39,45,0.1);
   --down:#1461c7;
-  --down-bg:transparent;
+  --down-bg:rgba(20,97,199,0.1);
   --accent:#0078d4;   /* 아웃룩 블루 */
-  --radius:0px;
-  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
 }
 
 [data-skin="outlook"] body{font-family:'Segoe UI',Calibri,'Malgun Gothic',sans-serif;}
-[data-skin="outlook"] .app{max-width:640px;}
-[data-skin="outlook"] .topbar{display:none;}
-[data-skin="outlook"] .status-bar{margin-top:0;}
 
-[data-skin="outlook"] .ol-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+/* 본문 = 메일 목록 — 카드 왼쪽에 발신자 아바타 원, 오른쪽엔 원래처럼 시간/등락 */
+[data-skin="outlook"] .panels{background:var(--bg);}
+[data-skin="outlook"] .search-row input{border-radius:0;}
+[data-skin="outlook"] .btn-primary{border-radius:0; background:var(--accent);}
+[data-skin="outlook"] .search-results{border-radius:0;}
+
+[data-skin="outlook"] .card-grid{gap:0; border-top:1px solid var(--line);}
+[data-skin="outlook"] .idx-card{
+  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
+  border-radius:0; padding:10px 12px 10px 46px; position:relative;
+}
+[data-skin="outlook"] .idx-card::before{
+  content:''; position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  background:var(--accent); opacity:0.85;
+}
+[data-skin="outlook"] .idx-change{border-radius:0; padding:1px 4px;}
+[data-skin="outlook"] .idx-name{font-weight:600; font-size:13.5px;}
+
+[data-skin="outlook"] .search-result-row{border-bottom:1px solid var(--line);}
+[data-skin="outlook"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
 
 .ol-titlebar{
   background:var(--accent); color:#fff;
@@ -995,45 +1003,16 @@ body.no-select{user-select:none;}
   background:#d7d5d3;
 }
 
-/* 본문 = 메일 목록 — 카드 왼쪽에 발신자 아바타 원, 오른쪽엔 원래처럼 시간/등락 */
-[data-skin="outlook"] .panels{background:var(--bg);}
-[data-skin="outlook"] .search-row input{border-radius:0;}
-[data-skin="outlook"] .btn-primary{border-radius:0; background:var(--accent);}
-[data-skin="outlook"] .search-results{border-radius:0;}
-
-[data-skin="outlook"] .card-grid{gap:0; border-top:1px solid var(--line);}
-[data-skin="outlook"] .idx-card{
-  background:var(--bg-elev); border:none; border-bottom:1px solid var(--line);
-  border-radius:0; padding:10px 12px 10px 46px; position:relative;
-}
-[data-skin="outlook"] .idx-card::before{
-  content:''; position:absolute; left:12px; top:50%; transform:translateY(-50%);
-  width:26px; height:26px; border-radius:50%;
-  background:var(--accent); opacity:0.85;
-}
-[data-skin="outlook"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
-[data-skin="outlook"] .idx-name{font-weight:600; font-size:13.5px;}
-[data-skin="outlook"] .idx-spark{display:none;}
-[data-skin="outlook"] .foot{display:none;}
-
-[data-skin="outlook"] .tab.active{background:var(--bg-elev); color:var(--accent); font-weight:700; border-bottom:2px solid var(--accent);}
-
-[data-skin="outlook"] .ol-statusbar{
-  display:flex; justify-content:space-between;
-  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
-  background:var(--accent);
-}
-
-[data-skin="outlook"] .search-result-row{border-bottom:1px solid var(--line);}
-[data-skin="outlook"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
-
 /* ============================================================
    위장 모드 — 크롬 브라우저(네이버 뉴스)
-   실제 앱 타이틀바 대신 브라우저 자체를 흉내내고, 시세 카드는 뉴스
-   페이지에 흔히 박혀 있는 "실시간 증시" 위젯처럼 보이게 테두리를 두름
    ============================================================ */
 .cr-chrome{display:none;}
 
+/* 2026-10-02: 엑셀/워드/PPT/카카오톡/아웃룩과 같은 방향으로 재설계 — 기본 UI(상단바/탭/
+   카드 내용)는 그대로 두고 배경·포인트 컬러만. 배경은 뉴스 페이지(옅은 회색), 종목 카드
+   영역은 그 위에 끼워진 흰 "실시간 증시" 위젯 박스처럼 테두리를 둘러서 보이게 함. 탭스트립/
+   주소창/뉴스 헤드라인 같은 나머지 가짜 브라우저 UI 전용 CSS는 .cr-chrome이 항상 숨김
+   처리라 죽은 코드로 남겨둠 — 6개 테마 전부 정리되면 한 번에 치울 예정. */
 :root[data-skin="chrome"]{
   --bg:#f1f3f4;
   --bg-elev:#ffffff;
@@ -1049,11 +1028,13 @@ body.no-select{user-select:none;}
   --accent:#03c75a;   /* 네이버 그린 */
 }
 
-[data-skin="chrome"] .app{max-width:640px; background:var(--bg-elev);}
-[data-skin="chrome"] .topbar{display:none;}
-[data-skin="chrome"] .status-bar{margin-top:0; margin-left:14px; margin-right:14px;}
-
-[data-skin="chrome"] .cr-chrome{display:block; background:var(--bg-elev);}
+/* 배경 = 뉴스 페이지(옅은 회색), 종목 카드 영역 = 그 위에 끼워진 흰 위젯 박스 */
+[data-skin="chrome"] .panels{
+  margin:0 14px 14px; padding:14px; background:var(--bg-elev);
+  border:1px solid var(--line); border-radius:10px;
+}
+[data-skin="chrome"] .card-grid{gap:8px;}
+[data-skin="chrome"] .search-result-row{border-bottom:1px solid var(--line);}
 
 .cr-tabstrip{background:#dee1e6; padding:8px 8px 0;}
 .cr-tab{
@@ -1102,20 +1083,3 @@ body.no-select{user-select:none;}
   font-size:12px; color:var(--text-dim); line-height:1.4;
   overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
 }
-
-/* 실제 시세(탭+카드)는 별도 박스로 두르지 않고, 위쪽 가짜 뉴스 UI와 같은
-   좌우 여백(14px)·배경(흰색)으로 이어서 한 페이지처럼 자연스럽게 연결함 */
-[data-skin="chrome"] .tabs{
-  margin:0 14px 10px; padding:0; background:transparent; flex-wrap:wrap;
-}
-[data-skin="chrome"] .tabs::before{
-  content:'📈 실시간 증시'; flex:1 0 100%;
-  font-size:13px; font-weight:700; color:var(--text);
-  padding:0 0 8px;
-}
-[data-skin="chrome"] .tab{background:transparent;}
-[data-skin="chrome"] .tab.active{background:var(--bg-elev-2);}
-[data-skin="chrome"] .panels{padding:0 14px 14px;}
-[data-skin="chrome"] .foot{display:none;}
-
-[data-skin="chrome"] .search-result-row{border-bottom:1px solid var(--line);}
