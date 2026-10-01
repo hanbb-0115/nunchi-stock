@@ -749,6 +749,11 @@ body.no-select{user-select:none;}
    ============================================================ */
 .pp-chrome, .pp-statusbar{display:none;}
 
+/* 2026-09-30: 엑셀/워드와 같은 방향으로 재설계 — 기본 UI는 그대로 두고 배경·포인트
+   컬러만. PPT는 "흰 슬라이드 한 장이 회색 작업영역 위에" 떠있는 모습을 배경 디자인으로,
+   종목 카드는 슬라이드에 올려둔 콘텐츠 박스(플레이스홀더)처럼 보이게 함. 리본/필름스트립
+   등 나머지 가짜 UI 전용 CSS는 .pp-chrome이 항상 숨김 처리라 더 이상 렌더링 안 되는
+   죽은 코드로 남겨둠 — 6개 테마 정리 끝나면 치울 예정. */
 :root[data-skin="ppt"]{
   --bg:#d6d6d6;
   --bg-elev:#ffffff;
@@ -758,21 +763,24 @@ body.no-select{user-select:none;}
   --text-dim:#484644;
   --text-faint:#7a7a7a;
   --up:#c1272d;
-  --up-bg:transparent;
+  --up-bg:rgba(193,39,45,0.1);
   --down:#1461c7;
-  --down-bg:transparent;
+  --down-bg:rgba(20,97,199,0.1);
   --accent:#b7472a;   /* 파워포인트 오렌지 */
-  --radius:0px;
-  --mono:Consolas,'SF Mono','Roboto Mono',monospace;
 }
 
 [data-skin="ppt"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
-[data-skin="ppt"] .app{max-width:640px;}
 
-[data-skin="ppt"] .topbar{display:none;}
-[data-skin="ppt"] .status-bar{margin-top:0;}
-
-[data-skin="ppt"] .pp-chrome{display:block; background:var(--bg-elev); border-bottom:1px solid var(--line);}
+/* 배경 = 슬라이드 한 장이 회색 작업영역 위에 떠있는 모습 */
+[data-skin="ppt"] .panels{padding:10px 16px 16px;}
+[data-skin="ppt"] .panel.active{
+  background:var(--bg-elev); border-radius:4px;
+  box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
+  padding:16px;
+}
+/* 종목 카드 = 슬라이드 위 콘텐츠 박스(플레이스홀더)처럼 */
+[data-skin="ppt"] .card-grid{gap:8px;}
+[data-skin="ppt"] .idx-card{background:var(--bg-elev-2); border:1px solid var(--line);}
 
 .pp-titlebar{
   background:var(--accent); color:#fff;
@@ -826,45 +834,6 @@ body.no-select{user-select:none;}
 }
 .pp-thumb.active{border-color:var(--accent); border-width:2px;}
 
-/* 탭 = 슬라이드 캔버스 위 보기 전환 링크처럼 단순화 */
-[data-skin="ppt"] .tabs{
-  margin:10px 16px 0; padding:0; gap:0; background:transparent; border-radius:0;
-}
-[data-skin="ppt"] .tab{
-  border-radius:0; background:transparent; color:var(--text-faint);
-  font-size:13px; font-weight:700; padding:4px 0; margin-right:16px; flex:none;
-}
-[data-skin="ppt"] .tab.active{color:var(--accent); border-bottom:2px solid var(--accent);}
-
-/* 본문 = 슬라이드 캔버스 — 회색 작업영역 위에 흰 슬라이드 한 장 */
-[data-skin="ppt"] .panels{padding:10px 16px 16px;}
-[data-skin="ppt"] .panel.active{
-  background:var(--bg-elev);
-  box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
-  padding:16px;
-}
-[data-skin="ppt"] .search-row input{border-radius:0;}
-[data-skin="ppt"] .btn-primary{border-radius:0; background:var(--accent);}
-[data-skin="ppt"] .search-results{border-radius:0;}
-
-[data-skin="ppt"] .card-grid{gap:8px;}
-[data-skin="ppt"] .idx-card{
-  background:var(--bg-elev-2); border:1px solid var(--line);
-  border-radius:0; padding:10px 12px;
-}
-[data-skin="ppt"] .idx-change{border-radius:0; padding:1px 4px; background:transparent !important;}
-[data-skin="ppt"] .idx-name{font-weight:700; font-size:14px;}
-[data-skin="ppt"] .idx-spark{display:none;}
-[data-skin="ppt"] .foot{display:none;}
-
-[data-skin="ppt"] .pp-statusbar{
-  display:flex; justify-content:space-between;
-  padding:4px 12px calc(4px + 40px); margin-bottom:-40px; font-size:11px; color:#fff;
-  background:var(--accent);
-}
-
-[data-skin="ppt"] .search-result-row{border-bottom:1px solid var(--line);}
-[data-skin="ppt"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
 
 /* ============================================================
    위장 모드 — 카카오톡
