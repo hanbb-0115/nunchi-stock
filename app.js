@@ -253,8 +253,8 @@ window.addEventListener('appinstalled', () => {
 // ---------- 설정 패널 (위장 테마 + 다크모드를 한 곳에 모음) ----------
 const SKIN_KEY = 'nunchi_skin_v1';
 // 새 테마를 추가할 땐 여기에 항목만 더하면 설정 목록에 자동으로 나타남 (CSS 구현은 별도).
-// letter/color/fg는 설정 패널의 아이콘 칩 배지용 — 각 위장 테마 안의 로고 버튼(xlLogoBtn 등)과
-// 같은 브랜드 색을 재사용해서 새 아이콘을 따로 안 그려도 되게 함.
+// letter/color/fg는 설정 패널의 아이콘 칩 배지용 — 각 앱의 브랜드 색을 재사용해서
+// 새 아이콘을 따로 안 그려도 되게 함.
 const SKIN_OPTIONS = [
   { id: 'none', label: '기본 화면', letter: '눈', color: 'var(--accent)', fg: '#08110d' },
   { id: 'excel', label: '엑셀', letter: 'X', color: '#217346', fg: '#fff' },
@@ -270,17 +270,6 @@ function getBossKeySkin() {
   return localStorage.getItem(BOSS_KEY_SKIN_KEY) || 'excel';
 }
 
-// 상단바(기본 화면)의 settingsBtn과, 각 위장 화면의 로고 버튼(xlLogoBtn 등) 모두
-// 같은 설정 패널을 연다 — 어느 화면이 보이든 항상 위장 테마/다크모드를 바꿀 수 있게.
-const skinTriggers = [
-  document.getElementById('settingsBtn'),
-  document.getElementById('xlLogoBtn'),
-  document.getElementById('wdLogoBtn'),
-  document.getElementById('ppLogoBtn'),
-  document.getElementById('kkLogoBtn'),
-  document.getElementById('olLogoBtn'),
-  document.getElementById('crLogoBtn'),
-];
 const settingsModal = document.getElementById('settingsModal');
 const settingsSkinList = document.getElementById('settingsSkinList');
 const bossKeySelect = document.getElementById('bossKeySelect');
@@ -291,10 +280,8 @@ function applySkin(skin) {
   localStorage.setItem(SKIN_KEY, skin);
   const opt = SKIN_OPTIONS.find((o) => o.id === skin);
   const label = opt && skin !== 'none' ? `위장 중: ${opt.label} (클릭해서 설정 열기)` : '설정';
-  skinTriggers.forEach((btn) => {
-    if (btn.classList.contains('icon-btn')) btn.classList.toggle('skin-active', skin !== 'none');
-    btn.title = label;
-  });
+  settingsBtn.classList.toggle('skin-active', skin !== 'none');
+  settingsBtn.title = label;
   renderSkinList();
 }
 
@@ -363,66 +350,6 @@ settingsBtn.addEventListener('click', (e) => {
 document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
 document.getElementById('settingsBackdrop').addEventListener('click', closeSettings);
 
-// 위장 테마 안의 작은 로고 버튼("빠른 메뉴")은 설정으로 바로 가지 않고, 새로고침/환율계산기/
-// 설정을 모아둔 작은 팝오버를 엶 — 위장 화면 디자인을 안 건드리고도 상단바 기능을 전부
-// 쓸 수 있게 하려는 목적. 앞으로 상단바에 기능이 추가되면 이 메뉴에도 줄만 추가하면 됨.
-const skinActionMenu = document.getElementById('skinActionMenu');
-let skinActionMenuTrigger = null;
-
-function openSkinActionMenu(triggerBtn) {
-  skinActionMenuTrigger = triggerBtn;
-  skinActionMenu.hidden = false;
-  const rect = triggerBtn.getBoundingClientRect();
-  skinActionMenu.style.top = `${rect.bottom + 6}px`;
-  skinActionMenu.style.left = `${rect.left}px`;
-  // 티커 호버 패널과 같은 방식 — 뷰포트 오른쪽으로 넘치면 왼쪽으로 당겨서 보정
-  const menuRect = skinActionMenu.getBoundingClientRect();
-  const viewportWidth = document.documentElement.clientWidth;
-  if (menuRect.right > viewportWidth) {
-    skinActionMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
-  }
-  triggerBtn.setAttribute('aria-expanded', 'true');
-}
-function closeSkinActionMenu() {
-  if (skinActionMenuTrigger) skinActionMenuTrigger.setAttribute('aria-expanded', 'false');
-  skinActionMenu.hidden = true;
-  skinActionMenuTrigger = null;
-}
-
-const DISGUISE_LOGO_BTNS = [
-  document.getElementById('xlLogoBtn'),
-  document.getElementById('wdLogoBtn'),
-  document.getElementById('ppLogoBtn'),
-  document.getElementById('kkLogoBtn'),
-  document.getElementById('olLogoBtn'),
-  document.getElementById('crLogoBtn'),
-];
-DISGUISE_LOGO_BTNS.forEach((btn) => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!skinActionMenu.hidden && skinActionMenuTrigger === btn) closeSkinActionMenu();
-    else openSkinActionMenu(btn);
-  });
-});
-document.addEventListener('click', (e) => {
-  if (!skinActionMenu.hidden && !skinActionMenu.contains(e.target)) closeSkinActionMenu();
-});
-
-document.getElementById('skinActionRefresh').addEventListener('click', () => {
-  closeSkinActionMenu();
-  document.getElementById('refreshBtn').click();
-});
-document.getElementById('skinActionFxCalc').addEventListener('click', () => {
-  closeSkinActionMenu();
-  track('fx_calc_open', { source: 'skin_menu' });
-  openFxCalc();
-});
-document.getElementById('skinActionSettings').addEventListener('click', () => {
-  const trigger = skinActionMenuTrigger;
-  closeSkinActionMenu();
-  openSettings(trigger);
-});
-
 // Esc 키 = 보스키: 누가 오는 게 보이면 즉시 위장 화면으로, 이미 위장 중이면 원래 있던
 // 화면으로 되돌아감(양방향 토글). preEscSkin에 "Esc 누르기 직전 화면"을 기억해뒀다가
 // 되돌아갈 때 씀 — 새로고침하면 초기화되는 세션 한정 기억이라 localStorage엔 안 남김.
@@ -444,7 +371,6 @@ document.addEventListener('keydown', (e) => {
     closeSettings();
     closeAlertModal();
     closeFxCalc();
-    closeSkinActionMenu();
   }
 });
 
@@ -1303,17 +1229,8 @@ function restartTickerAutoAdvance() {
   }
 }
 
-// 기본 화면 + 6개 위장 모드(엑셀/워드/PPT/카카오톡/아웃룩/크롬) 제목표시줄,
-// 총 7곳에 같은 티커를 동시에 띄운다 — 어느 화면이 보이든(CSS가 나머지를
-// 숨김) 항상 최신 상태로 맞춰져 있게.
 const TICKER_INSTANCES = [
   { wrap: 'tickerWrap', ticker: 'popularTicker', slide: 'tickerSlide', panel: 'tickerPanel' },
-  { wrap: 'xlTickerWrap', ticker: 'xlPopularTicker', slide: 'xlTickerSlide', panel: 'xlTickerPanel' },
-  { wrap: 'wdTickerWrap', ticker: 'wdPopularTicker', slide: 'wdTickerSlide', panel: 'wdTickerPanel' },
-  { wrap: 'ppTickerWrap', ticker: 'ppPopularTicker', slide: 'ppTickerSlide', panel: 'ppTickerPanel' },
-  { wrap: 'kkTickerWrap', ticker: 'kkPopularTicker', slide: 'kkTickerSlide', panel: 'kkTickerPanel' },
-  { wrap: 'olTickerWrap', ticker: 'olPopularTicker', slide: 'olTickerSlide', panel: 'olTickerPanel' },
-  { wrap: 'crTickerWrap', ticker: 'crPopularTicker', slide: 'crTickerSlide', panel: 'crTickerPanel' },
 ].map((ids) => ({
   wrapEl: document.getElementById(ids.wrap),
   tickerEl: document.getElementById(ids.ticker),

@@ -66,8 +66,7 @@ body{
 #appContent:focus-within, #appContent.opacity-reveal{opacity:1 !important;}
 
 /* 화면 투명도 조절 바 — 카카오톡 PC 채팅방처럼 앱 하단에 항상 고정. #appContent 밖이라
-   화면이 옅어져도 슬라이더는 항상 또렷하게 보임 (.app과 같은 폭을 맞추려고 위장 테마별로
-   max-width를 아래에서 각각 맞춰줌) */
+   화면이 옅어져도 슬라이더는 항상 또렷하게 보임 */
 #opacityBar{
   position:fixed; left:0; right:0; bottom:0; z-index:50;
   max-width:480px; margin:0 auto;
@@ -77,12 +76,6 @@ body{
 }
 .opacity-bar-label{font-size:11px; color:var(--text-faint); flex-shrink:0;}
 .opacity-bar-out{font-size:11px; color:var(--text-faint); min-width:30px; text-align:right; flex-shrink:0;}
-[data-skin="excel"] #opacityBar,
-[data-skin="word"] #opacityBar,
-[data-skin="ppt"] #opacityBar,
-[data-skin="kakao"] #opacityBar,
-[data-skin="outlook"] #opacityBar,
-[data-skin="chrome"] #opacityBar{max-width:640px;}
 
 /* Topbar */
 .topbar{
@@ -131,23 +124,8 @@ body{
 .ticker-slide .ticker-change.down{color:var(--down);}
 .ticker-slide .ticker-change.flat{color:var(--text-dim);}
 
-/* 위장 모드(엑셀/워드/PPT) 제목표시줄 안의 티커 — 진짜 그 앱 제목표시줄의
-   일부처럼 보이게 알약(pill) 모양을 없애고 색상 배경 위에 바로 얹음.
-   accent 색이 제목표시줄 배경과 같아서 순위 숫자는 흰색으로 바꿔야 보임 */
-.titlebar-ticker{
-  background:transparent; border:none; border-radius:6px; padding:0;
-}
-.titlebar-ticker:active{background:rgba(255,255,255,0.15);}
-.titlebar-ticker .ticker-viewport{height:14px;}
-.titlebar-ticker .ticker-slide{color:rgba(255,255,255,0.92); font-size:12px;}
-.titlebar-ticker .ticker-slide .ticker-rank{color:#fff;}
-
 /* 티커 스켈레톤 — 인기 검색어 응답 기다리는 동안 빈 자리 대신 짧게 반짝이는 바 하나 */
 .skel-ticker{width:72px; height:11px;}
-.titlebar-ticker .skel-ticker{
-  background:linear-gradient(90deg, rgba(255,255,255,0.16) 25%, rgba(255,255,255,0.34) 37%, rgba(255,255,255,0.16) 63%);
-  background-size:400% 100%;
-}
 
 /* 티커 호버 시 펼쳐지는 1~10위 전체 목록 — 티커 알약 왼쪽 끝에 맞춰서 바로 밑에
    열리게 함(항상 같은 기준점이라 기본 화면/위장 모드 어디서든 위치가 일관됨).
@@ -328,24 +306,6 @@ input[type="range"]::-moz-range-track{
   font-family:var(--mono); font-size:22px; font-weight:800;
   text-align:center; margin:4px 0 6px;
 }
-
-/* 위장 테마 로고 버튼("빠른 메뉴")을 누르면 뜨는 작은 팝오버 — 위장 화면 디자인은
-   안 건드리고, 새로고침/환율계산기/설정을 한 곳에 모아둠. 트리거 버튼 위치를 기준으로
-   JS에서 top/left를 계산해서 붙임(티커 호버 패널과 같은 방식) */
-.skin-action-menu{
-  position:fixed; z-index:70; min-width:150px;
-  background:var(--bg-elev); border:1px solid var(--line); border-radius:10px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.35);
-  padding:5px;
-}
-.skin-action-menu[hidden]{display:none;}
-.skin-action-row{
-  display:flex; align-items:center; gap:9px; width:100%;
-  padding:9px 10px; border:none; border-radius:8px;
-  background:transparent; color:var(--text); font-size:13px; text-align:left; cursor:pointer;
-}
-.skin-action-row:active{background:var(--bg-elev-2);}
-.skin-action-row svg{flex-shrink:0; color:var(--text-dim);}
 
 .status-bar{
   margin:0 18px 8px; padding:8px 12px;
@@ -536,17 +496,13 @@ body.no-select{user-select:none;}
 /* ============================================================
    위장 모드 — 엑셀
    ============================================================ */
-.xl-chrome, .xl-statusbar{display:none;}
-
 /* 2026-09-30: 리본/수식줄/시트탭 등 진짜 앱 전체를 흉내내던 버전에서, 기본 테마의 상단바/
    탭/카드 구조는 그대로 두고 배경·포인트 컬러만 위장 테마별로 입히는 방식으로 되돌림
    (사용자 요청) — 예전엔 "라이트모드랑 구분이 안 된다"는 이유로 반대로 갔던 적이 있는데,
    이번엔 완벽한 위장보다 가벼운 톤 차이로 충분하다는 판단.
    단, 엑셀만 "카카오톡 엑셀테마"를 레퍼런스로 절충안 추가(2026-09-30) — 배경에 시트
    눈금선(행/열)을 깔고, 종목 카드는 그 위에 병합된 행처럼 보이게(각진 모서리 + 왼쪽
-   행 번호 거터). 리본/수식줄/시트탭 같은 나머지 가짜 UI는 여전히 안 씀.
-   아래 남아있는 리본 전용 CSS(.xl-titlebar 등)는 .xl-chrome이 항상 숨김 처리라 더 이상
-   렌더링되지 않는 죽은 CSS — 6개 테마 전부 정리되면 한 번에 치울 예정. */
+   행 번호 거터). 리본/수식줄/시트탭 같은 나머지 가짜 UI는 안 씀. */
 :root[data-skin="excel"]{
   --bg:#e9eaeb;
   --bg-elev:#ffffff;
@@ -586,87 +542,12 @@ body.no-select{user-select:none;}
   font-size:11px; color:var(--text-faint);
 }
 
-.xl-titlebar{
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; gap:8px;
-  padding:5px 12px; font-size:12px;
-}
-/* 위장 모드 안(엑셀/워드/PPT)의 로고 버튼 — 진짜 앱처럼 보여야 해서 대놓고
-   "메뉴 버튼"처럼 만들 순 없지만, 눌러서 테마를 바꿀 수 있다는 걸 알아챌 수
-   있게 코너에 아주 작은 점 힌트만 둠 (위장은 유지하면서 발견 가능하게) */
-.xl-logo, .wd-logo, .pp-logo, .kk-logo, .ol-logo, .cr-logo{position:relative;}
-.xl-logo::after, .wd-logo::after, .pp-logo::after, .kk-logo::after, .ol-logo::after, .cr-logo::after{
-  content:''; position:absolute; right:-3px; bottom:-3px;
-  width:7px; height:7px; border-radius:50%;
-  background:var(--accent); border:1.5px solid var(--bg-elev);
-}
-
-.xl-logo{
-  width:16px; height:16px; border-radius:3px; background:#fff;
-  color:var(--accent); font-weight:800; font-size:11px;
-  display:flex; align-items:center; justify-content:center;
-  border:none; cursor:pointer; padding:0;
-}
-.xl-logo:active{transform:scale(0.9);}
-.xl-filename{opacity:0.95;}
-
-.xl-ribbon-tabs{
-  display:flex; gap:14px; padding:6px 12px 0;
-  font-size:12.5px; color:var(--text-dim);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; white-space:nowrap;
-  scrollbar-width:none;
-}
-.xl-ribbon-tabs::-webkit-scrollbar{display:none;}
-.xl-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
-.xl-ribbon-tabs span.active{
-  color:var(--accent); font-weight:700;
-  border-bottom:2px solid var(--accent);
-}
-
-.xl-ribbon-icons{
-  display:flex; gap:14px; padding:8px 12px;
-  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-  overflow-x:auto; scrollbar-width:none;
-}
-.xl-ribbon-icons::-webkit-scrollbar{display:none;}
-.xl-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
-.xl-icon-group:last-child{border-right:none;}
-.xl-icon-group span{
-  width:16px; height:16px; border-radius:3px;
-  background:#d7d5d3;
-}
-
-.xl-formula-bar{
-  display:flex; align-items:center; gap:0;
-  border-bottom:1px solid var(--line);
-  font-size:12px; color:var(--text-dim);
-}
-.xl-namebox{
-  width:64px; padding:4px 8px; border-right:1px solid var(--line);
-  font-family:var(--mono);
-}
-.xl-fx{padding:4px 10px; border-right:1px solid var(--line); font-style:italic; color:#217346;}
-.xl-formula-input{flex:1; padding:4px 10px;}
-
-.xl-colheaders{
-  display:flex; background:var(--bg-elev-2);
-  border-bottom:1px solid var(--line);
-  font-size:11px; color:var(--text-faint); text-align:center;
-}
-.xl-colheaders .xl-corner{width:26px; border-right:1px solid var(--line);}
-.xl-colheaders span:not(.xl-corner){flex:1; padding:3px 0; border-right:1px solid var(--line);}
-
 /* ============================================================
    위장 모드 — 워드
    ============================================================ */
-.wd-chrome, .wd-statusbar{display:none;}
-
 /* 2026-09-30: 엑셀과 같은 방향으로 재설계 — 기본 UI(상단바/탭)는 그대로 두고 배경·
    포인트 컬러만. 워드는 "흰 문서 페이지가 회색 캔버스 위에 떠있는" 모습을 배경 디자인으로,
-   종목 카드는 문서에 삽입된 표의 행처럼 보이게 함(엑셀의 "병합된 행"과 같은 결).
-   리본/눈금자 등 나머지 가짜 UI 전용 CSS(.wd-titlebar 등)는 .wd-chrome이 항상 숨김
-   처리라 더 이상 렌더링 안 되는 죽은 코드로 남겨둠 — 6개 테마 정리 끝나면 치울 예정. */
+   종목 카드는 문서에 삽입된 표의 행처럼 보이게 함(엑셀의 "병합된 행"과 같은 결). */
 :root[data-skin="word"]{
   --bg:#e8e9eb;
   --bg-elev:#ffffff;
@@ -697,64 +578,12 @@ body.no-select{user-select:none;}
 [data-skin="word"] .idx-card:last-child{border-bottom:none;}
 [data-skin="word"] .idx-card:nth-child(even){background:var(--bg-elev-2);}
 
-.wd-titlebar{
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; gap:8px;
-  padding:5px 12px; font-size:12px;
-}
-.wd-logo{
-  width:16px; height:16px; border-radius:3px; background:#fff;
-  color:var(--accent); font-weight:800; font-size:11px;
-  display:flex; align-items:center; justify-content:center;
-  border:none; cursor:pointer; padding:0;
-}
-.wd-logo:active{transform:scale(0.9);}
-.wd-filename{opacity:0.95;}
-
-.wd-ribbon-tabs{
-  display:flex; gap:14px; padding:6px 12px 0;
-  font-size:12.5px; color:var(--text-dim);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; white-space:nowrap;
-  scrollbar-width:none;
-}
-.wd-ribbon-tabs::-webkit-scrollbar{display:none;}
-.wd-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
-.wd-ribbon-tabs span.active{
-  color:var(--accent); font-weight:700;
-  border-bottom:2px solid var(--accent);
-}
-
-.wd-ribbon-icons{
-  display:flex; gap:14px; padding:8px 12px;
-  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-  overflow-x:auto; scrollbar-width:none;
-}
-.wd-ribbon-icons::-webkit-scrollbar{display:none;}
-.wd-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
-.wd-icon-group:last-child{border-right:none;}
-.wd-icon-group span{
-  width:16px; height:16px; border-radius:3px;
-  background:#d7d5d3;
-}
-
-/* 자 눈금 — 문서 상단 눈금자 흉내 */
-.wd-ruler{
-  height:14px; background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-  background-image:repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 12px);
-  background-position:14px 0;
-}
-
 /* ============================================================
    위장 모드 — 파워포인트
    ============================================================ */
-.pp-chrome, .pp-statusbar{display:none;}
-
 /* 2026-09-30: 엑셀/워드와 같은 방향으로 재설계 — 기본 UI는 그대로 두고 배경·포인트
    컬러만. PPT는 "흰 슬라이드 한 장이 회색 작업영역 위에" 떠있는 모습을 배경 디자인으로,
-   종목 카드는 슬라이드에 올려둔 콘텐츠 박스(플레이스홀더)처럼 보이게 함. 리본/필름스트립
-   등 나머지 가짜 UI 전용 CSS는 .pp-chrome이 항상 숨김 처리라 더 이상 렌더링 안 되는
-   죽은 코드로 남겨둠 — 6개 테마 정리 끝나면 치울 예정. */
+   종목 카드는 슬라이드에 올려둔 콘텐츠 박스(플레이스홀더)처럼 보이게 함. */
 :root[data-skin="ppt"]{
   --bg:#d6d6d6;
   --bg-elev:#ffffff;
@@ -788,69 +617,12 @@ body.no-select{user-select:none;}
 [data-skin="ppt"] .card-grid{gap:8px;}
 [data-skin="ppt"] .idx-card{background:var(--bg-elev-2); border:1px solid var(--line);}
 
-.pp-titlebar{
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; gap:8px;
-  padding:5px 12px; font-size:12px;
-}
-.pp-logo{
-  width:16px; height:16px; border-radius:3px; background:#fff;
-  color:var(--accent); font-weight:800; font-size:11px;
-  display:flex; align-items:center; justify-content:center;
-  border:none; cursor:pointer; padding:0;
-}
-.pp-logo:active{transform:scale(0.9);}
-.pp-filename{opacity:0.95;}
-
-.pp-ribbon-tabs{
-  display:flex; gap:14px; padding:6px 12px 0;
-  font-size:12.5px; color:var(--text-dim);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; white-space:nowrap;
-  scrollbar-width:none;
-}
-.pp-ribbon-tabs::-webkit-scrollbar{display:none;}
-.pp-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
-.pp-ribbon-tabs span.active{
-  color:var(--accent); font-weight:700;
-  border-bottom:2px solid var(--accent);
-}
-
-.pp-ribbon-icons{
-  display:flex; gap:14px; padding:8px 12px;
-  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-  overflow-x:auto; scrollbar-width:none;
-}
-.pp-ribbon-icons::-webkit-scrollbar{display:none;}
-.pp-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
-.pp-icon-group:last-child{border-right:none;}
-.pp-icon-group span{
-  width:16px; height:16px; border-radius:3px;
-  background:#d7d5d3;
-}
-
-/* 슬라이드 필름스트립 — 좌측 슬라이드 목록 대신 상단 가로 스트립으로 */
-.pp-filmstrip{
-  display:flex; gap:8px; padding:10px 12px;
-  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-}
-.pp-thumb{
-  width:34px; height:22px; border-radius:2px;
-  background:var(--bg-elev); border:1px solid var(--line); flex-shrink:0;
-}
-.pp-thumb.active{border-color:var(--accent); border-width:2px;}
-
-
 /* ============================================================
    위장 모드 — 카카오톡
    ============================================================ */
-.kk-chrome, .kk-inputbar{display:none;}
-
 /* 2026-10-02: 엑셀/워드/PPT와 같은 방향으로 재설계 — 기본 UI(상단바/탭/카드 내용)는
    그대로 두고 배경·포인트 컬러만. 배경은 카카오톡 채팅방 배경색, 종목 카드는 그 위에
-   흰 말풍선처럼 보이게 함. 타이틀바/공지/입력창 같은 나머지 가짜 채팅 UI 전용 CSS는
-   .kk-chrome이 항상 숨김 처리라 더 이상 렌더링 안 되는 죽은 코드로 남겨둠 — 6개 테마
-   전부 정리되면 한 번에 치울 예정. */
+   흰 말풍선처럼 보이게 함. */
 :root[data-skin="kakao"]{
   --bg:#b2c7da;        /* 카카오톡 채팅창 배경 */
   --bg-elev:#ffffff;
@@ -885,45 +657,12 @@ body.no-select{user-select:none;}
 }
 [data-skin="kakao"] .search-result-row{border-bottom:1px solid var(--line);}
 
-.kk-titlebar{
-  background:#fff; color:#1b1b1b;
-  display:flex; align-items:center; gap:8px;
-  padding:8px 12px; font-size:13px; font-weight:600;
-  border-bottom:1px solid var(--line);
-}
-.kk-logo{
-  width:18px; height:18px; border-radius:6px; background:#fee500;
-  border:none; cursor:pointer; padding:0; flex-shrink:0;
-}
-.kk-logo:active{transform:scale(0.9);}
-.kk-filename{opacity:0.85;}
-
-.kk-notice{
-  background:#fff6d9; color:#6b5a1f; font-size:11.5px;
-  padding:6px 12px; border-bottom:1px solid var(--line);
-}
-
-.kk-inputbar-plus{
-  width:26px; height:26px; border-radius:50%; background:var(--bg-elev-2);
-  color:#4a4a4a; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
-}
-.kk-inputbar-field{
-  flex:1; color:#9aa0a6; font-size:12.5px;
-}
-.kk-inputbar-send{
-  width:26px; height:26px; border-radius:50%; background:#fee500; flex-shrink:0;
-}
-
 /* ============================================================
    위장 모드 — 아웃룩
    ============================================================ */
-.ol-chrome, .ol-statusbar{display:none;}
-
 /* 2026-10-02: 엑셀/워드/PPT/카카오톡과 같은 방향으로 재설계 — 기본 UI(상단바/탭/카드
    내용)는 그대로 두고 배경·포인트 컬러만. 종목 카드는 메일함의 메일 목록 한 줄처럼
-   보이게 함(왼쪽 발신자 아바타 원 + 구분선). 리본/타이틀바 등 나머지 가짜 UI 전용
-   CSS는 .ol-chrome이 항상 숨김 처리라 죽은 코드로 남겨둠 — 6개 테마 전부 정리되면
-   한 번에 치울 예정. */
+   보이게 함(왼쪽 발신자 아바타 원 + 구분선). */
 :root[data-skin="outlook"]{
   --bg:#faf9f8;
   --bg-elev:#ffffff;
@@ -963,57 +702,12 @@ body.no-select{user-select:none;}
 [data-skin="outlook"] .search-result-row{border-bottom:1px solid var(--line);}
 [data-skin="outlook"] .sr-info{border-right:1px solid var(--line); padding-right:8px; margin-right:8px;}
 
-.ol-titlebar{
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; gap:8px;
-  padding:5px 12px; font-size:12px;
-}
-.ol-logo{
-  width:16px; height:16px; border-radius:3px; background:#fff;
-  color:var(--accent); font-weight:800; font-size:11px;
-  display:flex; align-items:center; justify-content:center;
-  border:none; cursor:pointer; padding:0;
-}
-.ol-logo:active{transform:scale(0.9);}
-.ol-filename{opacity:0.95;}
-
-.ol-ribbon-tabs{
-  display:flex; gap:14px; padding:6px 12px 0;
-  font-size:12.5px; color:var(--text-dim);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; white-space:nowrap;
-  scrollbar-width:none;
-}
-.ol-ribbon-tabs::-webkit-scrollbar{display:none;}
-.ol-ribbon-tabs span{padding-bottom:6px; cursor:default; flex-shrink:0;}
-.ol-ribbon-tabs span.active{
-  color:var(--accent); font-weight:700;
-  border-bottom:2px solid var(--accent);
-}
-
-.ol-ribbon-icons{
-  display:flex; gap:14px; padding:8px 12px;
-  background:var(--bg-elev-2); border-bottom:1px solid var(--line);
-  overflow-x:auto; scrollbar-width:none;
-}
-.ol-ribbon-icons::-webkit-scrollbar{display:none;}
-.ol-icon-group{display:flex; gap:5px; padding-right:14px; border-right:1px solid var(--line); flex-shrink:0;}
-.ol-icon-group:last-child{border-right:none;}
-.ol-icon-group span{
-  width:16px; height:16px; border-radius:3px;
-  background:#d7d5d3;
-}
-
 /* ============================================================
    위장 모드 — 크롬 브라우저(네이버 뉴스)
    ============================================================ */
-.cr-chrome{display:none;}
-
 /* 2026-10-02: 엑셀/워드/PPT/카카오톡/아웃룩과 같은 방향으로 재설계 — 기본 UI(상단바/탭/
    카드 내용)는 그대로 두고 배경·포인트 컬러만. 배경은 뉴스 페이지(옅은 회색), 종목 카드
-   영역은 그 위에 끼워진 흰 "실시간 증시" 위젯 박스처럼 테두리를 둘러서 보이게 함. 탭스트립/
-   주소창/뉴스 헤드라인 같은 나머지 가짜 브라우저 UI 전용 CSS는 .cr-chrome이 항상 숨김
-   처리라 죽은 코드로 남겨둠 — 6개 테마 전부 정리되면 한 번에 치울 예정. */
+   영역은 그 위에 끼워진 흰 "실시간 증시" 위젯 박스처럼 테두리를 둘러서 보이게 함. */
 :root[data-skin="chrome"]{
   --bg:#f1f3f4;
   --bg-elev:#ffffff;
@@ -1037,50 +731,3 @@ body.no-select{user-select:none;}
 [data-skin="chrome"] .card-grid{gap:8px;}
 [data-skin="chrome"] .search-result-row{border-bottom:1px solid var(--line);}
 
-.cr-tabstrip{background:#dee1e6; padding:8px 8px 0;}
-.cr-tab{
-  display:flex; align-items:center; gap:6px;
-  width:200px; max-width:60%; padding:7px 10px;
-  background:var(--bg-elev); border-radius:8px 8px 0 0;
-  font-size:12px; color:var(--text);
-}
-.cr-logo{
-  width:14px; height:14px; border-radius:50%; background:var(--accent);
-  border:none; cursor:pointer; padding:0; flex-shrink:0;
-}
-.cr-logo:active{transform:scale(0.9);}
-.cr-tab-title{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.cr-tab-close{color:var(--text-faint); font-size:13px; flex-shrink:0;}
-
-.cr-addressbar{
-  display:flex; align-items:center; gap:10px;
-  padding:8px 12px; background:var(--bg-elev); border-bottom:1px solid var(--line);
-}
-.cr-nav-arrow{color:var(--text-faint); font-size:14px;}
-.cr-addr-pill{
-  flex:1; min-width:0; display:flex; align-items:center; gap:6px;
-  background:var(--bg-elev-2); border-radius:14px; padding:5px 12px;
-  font-size:11.5px; color:var(--text-dim);
-}
-.cr-addr-lock{font-size:10px;}
-.cr-addr-url{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.cr-addr-star{color:var(--text-faint); font-size:13px;}
-
-.cr-newsnav{
-  display:flex; gap:14px; padding:8px 14px;
-  font-size:12.5px; color:var(--text-dim);
-  border-bottom:1px solid var(--line);
-  overflow-x:auto; white-space:nowrap; scrollbar-width:none;
-}
-.cr-newsnav::-webkit-scrollbar{display:none;}
-.cr-newsnav span{flex-shrink:0; cursor:default;}
-.cr-newsnav span.active{color:var(--accent); font-weight:700;}
-
-.cr-headlines{padding:12px 14px 4px;}
-.cr-headlines h4{margin:0 0 8px; font-size:13px; color:var(--text);}
-.cr-headline-row{display:flex; align-items:center; gap:10px; padding:6px 0;}
-.cr-headline-thumb{width:40px; height:28px; border-radius:4px; background:var(--bg-elev-2); flex-shrink:0;}
-.cr-headline-text{
-  font-size:12px; color:var(--text-dim); line-height:1.4;
-  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-}
