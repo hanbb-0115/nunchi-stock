@@ -908,18 +908,22 @@ async function loadDomestic() {
   }
 
   try {
-    const indices = await MarketData.getDomesticIndices();
-    const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
+    // 지수와 개별종목 시세를 동시에 요청 — 예전엔 지수가 다 끝난 뒤에야 종목 요청을 시작해서,
+    // 서버의 KIS 호출 큐(700ms 간격)에서 종목이 다른 탭 요청 뒤로 밀리며 첫 화면이 늦어졌음
     const stockOrder = order.filter((o) => o.kind === 'stock');
-    const quotes = await Promise.all(
-      stockOrder.map(async (o) => {
-        try {
-          return await MarketData.getQuote(o.symbol, o.name, 'domestic');
-        } catch {
-          return { symbol: o.symbol, name: o.name, price: 0, change: 0, changePct: 0, failed: true };
-        }
-      })
-    );
+    const [indices, quotes] = await Promise.all([
+      MarketData.getDomesticIndices(),
+      Promise.all(
+        stockOrder.map(async (o) => {
+          try {
+            return await MarketData.getQuote(o.symbol, o.name, 'domestic');
+          } catch {
+            return { symbol: o.symbol, name: o.name, price: 0, change: 0, changePct: 0, failed: true };
+          }
+        })
+      ),
+    ]);
+    const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
     const quoteMap = Object.fromEntries(quotes.map((q) => [q.symbol, q]));
 
     const cards = order
@@ -992,18 +996,20 @@ async function loadGlobal() {
   }
 
   try {
-    const indices = await MarketData.getGlobalIndices();
-    const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
     const stockOrder = order.filter((o) => o.kind === 'stock');
-    const quotes = await Promise.all(
-      stockOrder.map(async (o) => {
-        try {
-          return await MarketData.getQuote(o.symbol, o.name, 'overseas', o.excd);
-        } catch {
-          return { symbol: o.symbol, name: o.name, price: 0, change: 0, changePct: 0, failed: true };
-        }
-      })
-    );
+    const [indices, quotes] = await Promise.all([
+      MarketData.getGlobalIndices(),
+      Promise.all(
+        stockOrder.map(async (o) => {
+          try {
+            return await MarketData.getQuote(o.symbol, o.name, 'overseas', o.excd);
+          } catch {
+            return { symbol: o.symbol, name: o.name, price: 0, change: 0, changePct: 0, failed: true };
+          }
+        })
+      ),
+    ]);
+    const indexMap = Object.fromEntries(indices.map((i) => [i.id, i]));
     const quoteMap = Object.fromEntries(quotes.map((q) => [q.symbol, q]));
 
     const cards = order
@@ -1459,8 +1465,16 @@ document.getElementById('refreshBtn').addEventListener('click', async (e) => {
 // 서버가 KIS 호출을 전역 큐에서 700ms 간격으로 직렬화하다 보니, 다 같이 동시에 쏘면
 // 티커 시세(최대 8개)가 메인 콘텐츠보다 먼저 큐를 차지해서 첫 화면이 늦게 뜨는 문제가
 // 있었음(2026-08-21 발견/수정) — 메인 콘텐츠부터 큐를 선점하게 순서를 나눔.
+//
+// 같은 이유로 지금 보고 있는 탭(첫 로드는 항상 국내)을 먼저 끝내고 나머지 탭을 불러옴 —
+// 세 탭을 동시에 쏘면 눈에 안 보이는 탭의 요청이 보이는 탭 요청과 큐를 나눠 써서 첫 화면이
+// (호출 수 × 700ms)만큼 늦어짐. 안 보이는 탭은 어차피 캐시된 카드가 먼저 깔려 있음.
+const TAB_LOADERS = { domestic: loadDomestic, global: loadGlobal, watch: renderWatchlist };
 async function refreshAll() {
-  await Promise.all([loadDomestic(), loadGlobal(), renderWatchlist()]);
+  const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+  const first = TAB_LOADERS[activeTab] || loadDomestic;
+  await first();
+  await Promise.all(Object.values(TAB_LOADERS).filter((fn) => fn !== first).map((fn) => fn()));
   loadPopularTicker();
 }
 
