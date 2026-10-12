@@ -567,13 +567,14 @@ body.no-select{user-select:none;}
 
 [data-skin="word"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
 
-/* 배경 = 문서 페이지(흰 종이가 회색 캔버스 위에 떠있는 느낌). 종이는 .panels만이 아니라
-   상단바·탭·푸터를 감싼 앱 전체(#appContent)에 입혀서 화면 바깥 회색 캔버스까지 채움 */
-[data-skin="word"] #appContent{
-  margin:14px 10px; background:var(--bg-elev);
-  box-shadow:0 0 0 1px var(--line), 0 4px 14px rgba(0,0,0,0.12);
+/* 배경 = 화면 전체가 흰 문서 페이지(엑셀처럼 바깥 여백 없이 body 전체). 구분이 되도록
+   워드의 페이지 여백 안내선(좌우 세로선)을 옅게 깔음 */
+[data-skin="word"] body{
+  background-color:var(--bg-elev);
+  background-image:
+    linear-gradient(to right, transparent 17px, var(--line) 17px, var(--line) 18px, transparent 18px),
+    linear-gradient(to left, transparent 17px, var(--line) 17px, var(--line) 18px, transparent 18px);
 }
-[data-skin="word"] .panels{padding-top:6px;}
 /* 종목 카드 = 문서에 삽입된 표(테이블)의 행처럼 — 줄무늬 배경 + 칸 경계선 */
 [data-skin="word"] .card-grid{gap:0; border:1px solid var(--line); border-radius:2px; overflow:hidden;}
 [data-skin="word"] .idx-card{
@@ -605,13 +606,13 @@ body.no-select{user-select:none;}
 
 [data-skin="ppt"] body{font-family:Calibri,'Segoe UI','Malgun Gothic',sans-serif;}
 
-/* 배경 = 슬라이드 한 장이 회색 작업영역 위에 떠있는 모습. 슬라이드는 .panels만이 아니라
-   상단바·탭·푸터를 감싼 앱 전체(#appContent)에 입혀서 화면 바깥 회색 작업영역까지 채움 */
-[data-skin="ppt"] #appContent{
-  margin:10px 12px 14px; background:var(--bg-elev); border-radius:4px;
-  box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,0.18);
+/* 배경 = 화면 전체가 흰 슬라이드 한 장(엑셀처럼 바깥 여백 없이 body 전체). 구분이 되도록
+   슬라이드 상단에 테마 색 띠를 둠 */
+[data-skin="ppt"] body{
+  background-color:var(--bg-elev);
+  background-image:linear-gradient(var(--accent), var(--accent));
+  background-size:100% 6px; background-repeat:no-repeat;
 }
-[data-skin="ppt"] .panels{padding:0 16px 16px; display:flex; flex-direction:column;}
 /* 종목 카드 = 슬라이드 위 콘텐츠 박스(플레이스홀더)처럼 */
 [data-skin="ppt"] .card-grid{gap:8px;}
 [data-skin="ppt"] .idx-card{background:var(--bg-elev-2); border:1px solid var(--line);}
