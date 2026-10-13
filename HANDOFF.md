@@ -473,6 +473,12 @@ server-example/                              KIS 프록시 + 검색 서버 (Node
   curl 요청에만 걸리는 것으로 보였음 — 배포 반영 확인은 curl 반복 대신 실제 브라우저
   (Claude Browser 프리뷰 등)로, 그것도 너무 자주 말고 간격을 두고 할 것.
 
+- **Vercel은 저장소 루트를 그대로 정적 호스팅함 → `.vercelignore`로 내부 파일 제외(2026-10-13)** —
+  `.vercelignore` 없이는 `/HANDOFF.md`, `/server-example/server.js`(서버 소스 전체) 등이 사이트에서
+  누구나 읽을 수 있었음(키는 없었지만 운영 메모/서버 약점이 노출). 지금은 `HANDOFF.md`, `README.md`,
+  `server-example/`, `.claude/` 등을 제외함. Render 서버 배포는 별개라 영향 없음. **새로 만드는
+  내부용 파일/폴더는 `.vercelignore`에도 추가할 것.**
+
 ## 다음에 할 일
 
 0. **종목 상세 페이지(캔들차트) — 작업 중, git stash로 보류됨(2026-08-21)** — 종목 카드를

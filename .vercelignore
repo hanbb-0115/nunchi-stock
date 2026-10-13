@@ -1,0 +1,8 @@
+# 사이트(Vercel)에는 프론트엔드 정적 파일만 올림. 아래는 저장소에는 남기되 배포에서는 제외.
+# (Render 서버 배포는 이 파일과 무관 — Render는 git 저장소에서 server-example을 직접 빌드함)
+HANDOFF.md
+README.md
+server-example/
+.claude/
+.claude-static-server.ps1
+.static-server.log
