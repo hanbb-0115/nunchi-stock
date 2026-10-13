@@ -1473,8 +1473,8 @@ const TAB_LOADERS = { domestic: loadDomestic, global: loadGlobal, watch: renderW
 async function refreshAll() {
   const activeTab = document.querySelector('.tab.active')?.dataset.tab;
   const first = TAB_LOADERS[activeTab] || loadDomestic;
-  await first();
-  await Promise.all(Object.values(TAB_LOADERS).filter((fn) => fn !== first).map((fn) => fn()));
+  await first().catch(() => {}); // 첫 탭이 실패해도 나머지 탭은 계속 불러옴
+  await Promise.all(Object.values(TAB_LOADERS).filter((fn) => fn !== first).map((fn) => fn().catch(() => {})));
   loadPopularTicker();
 }
 
